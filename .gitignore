@@ -1,0 +1,19 @@
+node_modules/
+# Build outputs
+cache/
+out/
+target/
+
+# Broadcast (deployments, add /broadcast/*/31337/ to keep local)
+broadcast/
+
+# Environment
+.env
+
+# Dependencies
+lib/
+node_modules/
+
+# Docs
+docs/
+
