@@ -7,7 +7,7 @@ import {Event} from "../src/Event.sol";
 import {EventFactory} from "../src/EventFactory.sol";
 import {IMarketplace} from "../src/interfaces/IMarketplace.sol";
 import {IEvent} from "../src/interfaces/IEvent.sol";
-import {Errors} from "../src/libraries/Errors.sol";
+import {SimplrErrors} from "../src/libraries/SimplrErrors.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 
 contract MarketplaceTest is Test, IERC1155Receiver {
@@ -150,7 +150,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         uint256 expiration = block.timestamp + 1 days;
 
         vm.prank(seller);
-        vm.expectRevert(Errors.ZeroQuantity.selector);
+        vm.expectRevert(SimplrErrors.ZeroQuantity.selector);
         marketplace.createListing(address(eventContract), TIER_ID, 0, LISTING_PRICE, expiration);
     }
 
@@ -158,7 +158,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         uint256 expiration = block.timestamp + 1 days;
 
         vm.prank(seller);
-        vm.expectRevert(Errors.ZeroPrice.selector);
+        vm.expectRevert(SimplrErrors.ZeroPrice.selector);
         marketplace.createListing(address(eventContract), TIER_ID, 1, 0, expiration);
     }
 
@@ -166,7 +166,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         uint256 expiration = block.timestamp - 1; // Past
 
         vm.prank(seller);
-        vm.expectRevert(Errors.InvalidExpiration.selector);
+        vm.expectRevert(SimplrErrors.InvalidExpiration.selector);
         marketplace.createListing(address(eventContract), TIER_ID, 1, LISTING_PRICE, expiration);
     }
 
@@ -204,13 +204,13 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         uint256 listingId = marketplace.createListing(address(eventContract), TIER_ID, 3, LISTING_PRICE, expiration);
 
         vm.prank(buyer);
-        vm.expectRevert(Errors.NotSeller.selector);
+        vm.expectRevert(SimplrErrors.NotSeller.selector);
         marketplace.cancelListing(listingId);
     }
 
     function test_cancelListing_revertsIfListingDoesNotExist() public {
         vm.prank(seller);
-        vm.expectRevert(Errors.ListingDoesNotExist.selector);
+        vm.expectRevert(SimplrErrors.ListingDoesNotExist.selector);
         marketplace.cancelListing(999);
     }
 
@@ -250,7 +250,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         uint256 listingId = marketplace.createListing(address(eventContract), TIER_ID, 3, LISTING_PRICE, expiration);
 
         vm.prank(buyer);
-        vm.expectRevert(Errors.NotSeller.selector);
+        vm.expectRevert(SimplrErrors.NotSeller.selector);
         marketplace.updateListingPrice(listingId, 3 ether);
     }
 
@@ -261,7 +261,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         uint256 listingId = marketplace.createListing(address(eventContract), TIER_ID, 3, LISTING_PRICE, expiration);
 
         vm.prank(seller);
-        vm.expectRevert(Errors.ZeroPrice.selector);
+        vm.expectRevert(SimplrErrors.ZeroPrice.selector);
         marketplace.updateListingPrice(listingId, 0);
     }
 
@@ -363,7 +363,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         marketplace.cancelListing(listingId);
 
         vm.prank(buyer);
-        vm.expectRevert(Errors.ListingNotActive.selector);
+        vm.expectRevert(SimplrErrors.ListingNotActive.selector);
         marketplace.buyListing{value: LISTING_PRICE}(listingId, 1);
     }
 
@@ -377,7 +377,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         vm.warp(expiration + 1);
 
         vm.prank(buyer);
-        vm.expectRevert(Errors.ListingExpired.selector);
+        vm.expectRevert(SimplrErrors.ListingExpired.selector);
         marketplace.buyListing{value: LISTING_PRICE}(listingId, 1);
     }
 
@@ -388,7 +388,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         uint256 listingId = marketplace.createListing(address(eventContract), TIER_ID, 3, LISTING_PRICE, expiration);
 
         vm.prank(buyer);
-        vm.expectRevert(Errors.InsufficientQuantity.selector);
+        vm.expectRevert(SimplrErrors.InsufficientQuantity.selector);
         marketplace.buyListing{value: LISTING_PRICE * 5}(listingId, 5);
     }
 
@@ -399,7 +399,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         uint256 listingId = marketplace.createListing(address(eventContract), TIER_ID, 3, LISTING_PRICE, expiration);
 
         vm.prank(buyer);
-        vm.expectRevert(Errors.IncorrectPayment.selector);
+        vm.expectRevert(SimplrErrors.IncorrectPayment.selector);
         marketplace.buyListing{value: LISTING_PRICE - 1}(listingId, 1);
     }
 
@@ -410,7 +410,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         uint256 listingId = marketplace.createListing(address(eventContract), TIER_ID, 3, LISTING_PRICE, expiration);
 
         vm.prank(buyer);
-        vm.expectRevert(Errors.ZeroQuantity.selector);
+        vm.expectRevert(SimplrErrors.ZeroQuantity.selector);
         marketplace.buyListing{value: 0}(listingId, 0);
     }
 

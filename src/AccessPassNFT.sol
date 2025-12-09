@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IAccessPassNFT} from "./interfaces/IAccessPassNFT.sol";
-import {Errors} from "./libraries/Errors.sol";
+import {SimplrErrors} from "./libraries/SimplrErrors.sol";
 
 /// @title AccessPassNFT
 /// @notice ERC-721 NFT representing venue access after ticket redemption
@@ -14,8 +14,11 @@ contract AccessPassNFT is ERC721, IAccessPassNFT {
 
     // ============ State Variables ============
 
-    /// @notice The Event contract that deployed this AccessPassNFT
-    address public immutable eventContract;
+    /// @notice The Event contract that can mint access passes
+    address public eventContract;
+
+    /// @notice Whether the event contract has been set
+    bool private _eventContractSet;
 
     /// @notice The lock duration for transfers (24 hours)
     uint256 public constant lockDuration = 24 hours;
@@ -40,16 +43,27 @@ contract AccessPassNFT is ERC721, IAccessPassNFT {
         string memory symbol_,
         string memory baseURI_
     ) ERC721(name_, symbol_) {
-        eventContract = msg.sender;
         _baseTokenURI = baseURI_;
     }
 
     // ============ External Functions ============
 
     /// @inheritdoc IAccessPassNFT
+    function setEventContract(address eventContract_) external {
+        if (_eventContractSet) {
+            revert SimplrErrors.EventContractAlreadySet();
+        }
+        if (eventContract_ == address(0)) {
+            revert SimplrErrors.ZeroAddress();
+        }
+        eventContract = eventContract_;
+        _eventContractSet = true;
+    }
+
+    /// @inheritdoc IAccessPassNFT
     function mint(address to, uint256 tierId) external returns (uint256 tokenId) {
         if (msg.sender != eventContract) {
-            revert Errors.NotAuthorizedMinter();
+            revert SimplrErrors.NotAuthorizedMinter();
         }
 
         unchecked {
@@ -105,7 +119,7 @@ contract AccessPassNFT is ERC721, IAccessPassNFT {
         // Allow minting and burning, but block transfers during lock period
         if (from != address(0) && to != address(0)) {
             if (block.timestamp < _metadata[tokenId].mintTimestamp + lockDuration) {
-                revert Errors.TransferLocked();
+                revert SimplrErrors.TransferLocked();
             }
         }
 

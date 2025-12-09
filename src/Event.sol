@@ -1,28 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {ERC1155Supply} from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
-import {ERC2981} from "@openzeppelin/contracts/token/common/ERC2981.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
+import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
+import {ERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/token/common/ERC2981Upgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+import {NoncesUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {AccessPassNFT} from "./AccessPassNFT.sol";
+import {IAccessPassNFT} from "./interfaces/IAccessPassNFT.sol";
 import {IEvent} from "./interfaces/IEvent.sol";
-import {Errors} from "./libraries/Errors.sol";
+import {SimplrErrors} from "./libraries/SimplrErrors.sol";
 
 /// @title Event
 /// @notice ERC-1155 contract for event tickets where token IDs represent tiers
 /// @dev Supports ticket purchase, EIP-712 signature redemption, and royalties
-contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces, ReentrancyGuard, IEvent {
+contract Event is
+    Initializable,
+    ERC1155Upgradeable,
+    ERC1155SupplyUpgradeable,
+    ERC2981Upgradeable,
+    OwnableUpgradeable,
+    EIP712Upgradeable,
+    NoncesUpgradeable,
+    ReentrancyGuardUpgradeable,
+    IEvent
+{
     using ECDSA for bytes32;
 
     // ============ Constants ============
-
-    /// @notice Role identifier for gatekeepers
-    bytes32 public constant GATEKEEPER_ROLE = keccak256("GATEKEEPER_ROLE");
 
     /// @notice EIP-712 typehash for ticket redemption
     bytes32 public constant REDEMPTION_TYPEHASH = keccak256(
@@ -37,9 +45,6 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
     /// @notice Event symbol
     string private _symbol;
 
-    /// @notice Whether the contract has been initialized
-    bool private _initialized;
-
     /// @notice The AccessPassNFT contract for this event
     address public accessPassNFT;
 
@@ -49,10 +54,15 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
     /// @notice Mapping to track if a tier exists
     mapping(uint256 => bool) private _tierExists;
 
+    /// @notice Mapping of gatekeeper addresses
+    mapping(address => bool) private _gatekeepers;
+
     // ============ Constructor ============
 
-    /// @notice Constructor sets up ERC1155 with empty URI and EIP712 domain
-    constructor() ERC1155("") EIP712("EventTicket", "1") {}
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
     // ============ Initialization ============
 
@@ -61,29 +71,25 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
         EventConfig calldata eventConfig,
         TierConfig[] calldata tiers,
         address[] calldata initialGatekeepers,
-        address admin
-    ) external {
-        if (_initialized) {
-            revert Errors.AlreadyInitialized();
-        }
-        _initialized = true;
+        address admin,
+        address accessPassNFT_
+    ) external initializer {
+        __ERC1155_init("");
+        __ERC1155Supply_init();
+        __ERC2981_init();
+        __Ownable_init(admin);
+        __EIP712_init("EventTicket", "1");
+        __Nonces_init();
+        __ReentrancyGuard_init();
 
         _name = eventConfig.name;
         _symbol = eventConfig.symbol;
-
-        // Deploy AccessPassNFT
-        accessPassNFT = address(new AccessPassNFT(
-            string(abi.encodePacked(eventConfig.name, " Access Pass")),
-            string(abi.encodePacked(eventConfig.symbol, "-AP")),
-            eventConfig.baseURI
-        ));
-
-        // Setup roles
-        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        accessPassNFT = accessPassNFT_;
 
         // Setup gatekeepers
         for (uint256 i = 0; i < initialGatekeepers.length; i++) {
-            _grantRole(GATEKEEPER_ROLE, initialGatekeepers[i]);
+            _gatekeepers[initialGatekeepers[i]] = true;
+            emit GatekeeperAdded(initialGatekeepers[i]);
         }
 
         // Create tiers
@@ -103,7 +109,7 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
         string calldata tierName,
         uint256 price,
         uint256 maxSupply
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyOwner {
         _createTier(tierId, tierName, price, maxSupply);
     }
 
@@ -112,14 +118,14 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
         uint256 tierId,
         uint256 newPrice,
         uint256 newMaxSupply
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyOwner {
         if (!_tierExists[tierId]) {
-            revert Errors.TierDoesNotExist();
+            revert SimplrErrors.TierDoesNotExist();
         }
 
         uint256 currentSupply = totalSupply(tierId);
         if (newMaxSupply < currentSupply) {
-            revert Errors.CannotReduceBelowSupply();
+            revert SimplrErrors.CannotReduceBelowSupply();
         }
 
         _tiers[tierId].price = newPrice;
@@ -129,9 +135,9 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
     }
 
     /// @inheritdoc IEvent
-    function setTierActive(uint256 tierId, bool active) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function setTierActive(uint256 tierId, bool active) external onlyOwner {
         if (!_tierExists[tierId]) {
-            revert Errors.TierDoesNotExist();
+            revert SimplrErrors.TierDoesNotExist();
         }
 
         _tiers[tierId].active = active;
@@ -142,25 +148,25 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
     // ============ Admin Functions - Gatekeeper Management ============
 
     /// @inheritdoc IEvent
-    function addGatekeeper(address gatekeeper) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _grantRole(GATEKEEPER_ROLE, gatekeeper);
+    function addGatekeeper(address gatekeeper) external onlyOwner {
+        _gatekeepers[gatekeeper] = true;
         emit GatekeeperAdded(gatekeeper);
     }
 
     /// @inheritdoc IEvent
-    function removeGatekeeper(address gatekeeper) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _revokeRole(GATEKEEPER_ROLE, gatekeeper);
+    function removeGatekeeper(address gatekeeper) external onlyOwner {
+        _gatekeepers[gatekeeper] = false;
         emit GatekeeperRemoved(gatekeeper);
     }
 
     // ============ Admin Functions - Withdraw ============
 
     /// @inheritdoc IEvent
-    function withdraw(address to) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
+    function withdraw(address to) external onlyOwner nonReentrant {
         uint256 balance = address(this).balance;
         (bool success,) = to.call{value: balance}("");
         if (!success) {
-            revert Errors.TransferFailed();
+            revert SimplrErrors.TransferFailed();
         }
         emit FundsWithdrawn(to, balance);
     }
@@ -170,26 +176,26 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
     /// @inheritdoc IEvent
     function buyTickets(uint256 tierId, uint256 quantity) external payable nonReentrant {
         if (quantity == 0) {
-            revert Errors.ZeroQuantity();
+            revert SimplrErrors.ZeroQuantity();
         }
 
         if (!_tierExists[tierId]) {
-            revert Errors.TierDoesNotExist();
+            revert SimplrErrors.TierDoesNotExist();
         }
 
         Tier storage tier = _tiers[tierId];
 
         if (!tier.active) {
-            revert Errors.TierNotActive();
+            revert SimplrErrors.TierNotActive();
         }
 
         if (totalSupply(tierId) + quantity > tier.maxSupply) {
-            revert Errors.ExceedsMaxSupply();
+            revert SimplrErrors.ExceedsMaxSupply();
         }
 
         uint256 totalPrice = tier.price * quantity;
         if (msg.value != totalPrice) {
-            revert Errors.IncorrectPayment();
+            revert SimplrErrors.IncorrectPayment();
         }
 
         _mint(msg.sender, tierId, quantity, "");
@@ -206,16 +212,16 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
         uint256 deadline,
         bytes calldata signature
     ) external nonReentrant {
-        if (!hasRole(GATEKEEPER_ROLE, msg.sender)) {
-            revert Errors.NotGatekeeper();
+        if (!_gatekeepers[msg.sender]) {
+            revert SimplrErrors.NotGatekeeper();
         }
 
         if (block.timestamp > deadline) {
-            revert Errors.SignatureExpired();
+            revert SimplrErrors.SignatureExpired();
         }
 
         if (balanceOf(ticketHolder, tierId) < 1) {
-            revert Errors.InsufficientTickets();
+            revert SimplrErrors.InsufficientTickets();
         }
 
         // Verify signature
@@ -231,14 +237,14 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
         address signer = hash.recover(signature);
 
         if (signer != ticketHolder) {
-            revert Errors.InvalidSignature();
+            revert SimplrErrors.InvalidSignature();
         }
 
         // Burn ticket
         _burn(ticketHolder, tierId, 1);
 
         // Mint access pass
-        uint256 accessPassId = AccessPassNFT(accessPassNFT).mint(ticketHolder, tierId);
+        uint256 accessPassId = IAccessPassNFT(accessPassNFT).mint(ticketHolder, tierId);
 
         emit TicketRedeemed(ticketHolder, tierId, accessPassId);
     }
@@ -252,7 +258,7 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
 
     /// @inheritdoc IEvent
     function isGatekeeper(address account) external view returns (bool) {
-        return hasRole(GATEKEEPER_ROLE, account);
+        return _gatekeepers[account];
     }
 
     /// @inheritdoc IEvent
@@ -281,11 +287,11 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
         uint256 maxSupply
     ) internal {
         if (_tierExists[tierId]) {
-            revert Errors.TierAlreadyExists();
+            revert SimplrErrors.TierAlreadyExists();
         }
 
         if (maxSupply == 0) {
-            revert Errors.ZeroMaxSupply();
+            revert SimplrErrors.ZeroMaxSupply();
         }
 
         _tierExists[tierId] = true;
@@ -301,21 +307,21 @@ contract Event is ERC1155, ERC1155Supply, ERC2981, AccessControl, EIP712, Nonces
 
     // ============ Override Functions ============
 
-    /// @notice Required override for ERC1155Supply
+    /// @notice Required override for ERC1155SupplyUpgradeable
     function _update(
         address from,
         address to,
         uint256[] memory ids,
         uint256[] memory values
-    ) internal override(ERC1155, ERC1155Supply) {
+    ) internal override(ERC1155Upgradeable, ERC1155SupplyUpgradeable) {
         super._update(from, to, ids, values);
     }
 
-    /// @notice Required override for AccessControl and ERC1155
+    /// @notice Required override for ERC1155 and ERC2981
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC1155, ERC2981, AccessControl)
+        override(ERC1155Upgradeable, ERC2981Upgradeable)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

@@ -6,6 +6,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IEventFactory} from "./interfaces/IEventFactory.sol";
 import {IEvent} from "./interfaces/IEvent.sol";
 import {Event} from "./Event.sol";
+import {AccessPassNFT} from "./AccessPassNFT.sol";
 
 /// @title EventFactory
 /// @notice Factory for deploying Event contracts using EIP-1167 minimal proxies
@@ -41,15 +42,26 @@ contract EventFactory is Ownable, IEventFactory {
         IEvent.TierConfig[] calldata tiers,
         address[] calldata initialGatekeepers
     ) external returns (address eventAddress) {
-        // Clone the implementation
+        // 1. Clone the Event implementation
         eventAddress = Clones.clone(implementation);
 
-        // Initialize the event
+        // 2. Deploy AccessPassNFT
+        AccessPassNFT accessPass = new AccessPassNFT(
+            string(abi.encodePacked(eventConfig.name, " Access Pass")),
+            string(abi.encodePacked(eventConfig.symbol, "-AP")),
+            eventConfig.baseURI
+        );
+
+        // 3. Link AccessPassNFT to Event
+        accessPass.setEventContract(eventAddress);
+
+        // 4. Initialize the Event with AccessPassNFT address
         Event(eventAddress).initialize(
             eventConfig,
             tiers,
             initialGatekeepers,
-            msg.sender
+            msg.sender,
+            address(accessPass)
         );
 
         // Track the event

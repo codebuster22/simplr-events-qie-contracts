@@ -6,7 +6,7 @@ import {EventFactory} from "../src/EventFactory.sol";
 import {Event} from "../src/Event.sol";
 import {IEventFactory} from "../src/interfaces/IEventFactory.sol";
 import {IEvent} from "../src/interfaces/IEvent.sol";
-import {Errors} from "../src/libraries/Errors.sol";
+import {SimplrErrors} from "../src/libraries/SimplrErrors.sol";
 
 contract EventFactoryTest is Test {
     EventFactory public factory;
@@ -123,9 +123,8 @@ contract EventFactoryTest is Test {
         assertEq(eventContract.name(), eventConfig.name);
         assertEq(eventContract.symbol(), eventConfig.symbol);
 
-        // Check admin role
-        bytes32 adminRole = eventContract.DEFAULT_ADMIN_ROLE();
-        assertTrue(eventContract.hasRole(adminRole, organizer1));
+        // Check owner (organizer is the owner)
+        assertEq(eventContract.owner(), organizer1);
 
         // Check gatekeeper role
         assertTrue(eventContract.isGatekeeper(gatekeeper1));
@@ -135,6 +134,9 @@ contract EventFactoryTest is Test {
         assertEq(tier.price, 1 ether);
         assertEq(tier.maxSupply, 100);
         assertTrue(tier.active);
+
+        // Check AccessPassNFT was deployed and linked
+        assertTrue(eventContract.accessPassNFT() != address(0));
     }
 
     function test_createEvent_multipleOrganizers() public {

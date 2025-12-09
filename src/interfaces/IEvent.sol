@@ -82,11 +82,13 @@ interface IEvent {
     /// @param tiers Array of tier configurations
     /// @param initialGatekeepers Array of initial gatekeeper addresses
     /// @param admin The admin address (event organizer)
+    /// @param accessPassNFT_ The AccessPassNFT contract address
     function initialize(
         EventConfig calldata eventConfig,
         TierConfig[] calldata tiers,
         address[] calldata initialGatekeepers,
-        address admin
+        address admin,
+        address accessPassNFT_
     ) external;
 
     // ============ Admin Functions - Tier Management ============

@@ -6,11 +6,15 @@ import {Event} from "../src/Event.sol";
 import {AccessPassNFT} from "../src/AccessPassNFT.sol";
 import {IEvent} from "../src/interfaces/IEvent.sol";
 import {IAccessPassNFT} from "../src/interfaces/IAccessPassNFT.sol";
-import {Errors} from "../src/libraries/Errors.sol";
+import {SimplrErrors} from "../src/libraries/SimplrErrors.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract EventTest is Test, IERC1155Receiver {
+    Event public eventImplementation;
     Event public eventContract;
+    AccessPassNFT public accessPass;
 
     address public admin;
     address public gatekeeper1;
@@ -65,9 +69,25 @@ contract EventTest is Test, IERC1155Receiver {
         // Setup initial gatekeepers
         initialGatekeepers.push(gatekeeper1);
 
-        // Deploy and initialize Event contract
-        eventContract = new Event();
-        eventContract.initialize(eventConfig, tierConfigs, initialGatekeepers, admin);
+        // Deploy Event implementation
+        eventImplementation = new Event();
+
+        // Clone the Event implementation (like the factory does)
+        address eventAddress = Clones.clone(address(eventImplementation));
+        eventContract = Event(eventAddress);
+
+        // Deploy AccessPassNFT
+        accessPass = new AccessPassNFT(
+            "Test Event Access Pass",
+            "TE-AP",
+            "https://api.example.com/"
+        );
+
+        // Link AccessPassNFT to Event
+        accessPass.setEventContract(address(eventContract));
+
+        // Initialize Event contract
+        eventContract.initialize(eventConfig, tierConfigs, initialGatekeepers, admin, address(accessPass));
     }
 
     // ============ IERC1155Receiver Implementation ============
@@ -106,14 +126,12 @@ contract EventTest is Test, IERC1155Receiver {
         assertEq(eventContract.symbol(), eventConfig.symbol);
     }
 
-    function test_initialize_deploysAccessPassNFT() public view {
-        address accessPass = eventContract.accessPassNFT();
-        assertTrue(accessPass != address(0));
+    function test_initialize_setsAccessPassNFT() public view {
+        assertEq(eventContract.accessPassNFT(), address(accessPass));
     }
 
-    function test_initialize_setsAdminRole() public view {
-        bytes32 adminRole = eventContract.DEFAULT_ADMIN_ROLE();
-        assertTrue(eventContract.hasRole(adminRole, admin));
+    function test_initialize_setsOwner() public view {
+        assertEq(eventContract.owner(), admin);
     }
 
     function test_initialize_setsGatekeeperRole() public view {
@@ -135,8 +153,8 @@ contract EventTest is Test, IERC1155Receiver {
     }
 
     function test_initialize_revertsOnSecondCall() public {
-        vm.expectRevert(Errors.AlreadyInitialized.selector);
-        eventContract.initialize(eventConfig, tierConfigs, initialGatekeepers, admin);
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        eventContract.initialize(eventConfig, tierConfigs, initialGatekeepers, admin, address(accessPass));
     }
 
     // ============ Tier Management Tests ============
@@ -171,11 +189,11 @@ contract EventTest is Test, IERC1155Receiver {
 
     function test_createTier_revertsIfTierExists() public {
         vm.prank(admin);
-        vm.expectRevert(Errors.TierAlreadyExists.selector);
+        vm.expectRevert(SimplrErrors.TierAlreadyExists.selector);
         eventContract.createTier(VIP_TIER_ID, "VIP2", 2 ether, 50);
     }
 
-    function test_createTier_revertsIfNotAdmin() public {
+    function test_createTier_revertsIfNotOwner() public {
         vm.prank(user1);
         vm.expectRevert();
         eventContract.createTier(3, "Premium", 0.5 ether, 500);
@@ -183,7 +201,7 @@ contract EventTest is Test, IERC1155Receiver {
 
     function test_createTier_revertsIfZeroMaxSupply() public {
         vm.prank(admin);
-        vm.expectRevert(Errors.ZeroMaxSupply.selector);
+        vm.expectRevert(SimplrErrors.ZeroMaxSupply.selector);
         eventContract.createTier(3, "Premium", 0.5 ether, 0);
     }
 
@@ -211,7 +229,7 @@ contract EventTest is Test, IERC1155Receiver {
 
     function test_updateTier_revertsIfTierDoesNotExist() public {
         vm.prank(admin);
-        vm.expectRevert(Errors.TierDoesNotExist.selector);
+        vm.expectRevert(SimplrErrors.TierDoesNotExist.selector);
         eventContract.updateTier(999, 1 ether, 100);
     }
 
@@ -222,7 +240,7 @@ contract EventTest is Test, IERC1155Receiver {
 
         // Try to reduce max supply below current supply
         vm.prank(admin);
-        vm.expectRevert(Errors.CannotReduceBelowSupply.selector);
+        vm.expectRevert(SimplrErrors.CannotReduceBelowSupply.selector);
         eventContract.updateTier(VIP_TIER_ID, VIP_PRICE, 5);
     }
 
@@ -307,47 +325,37 @@ contract EventTest is Test, IERC1155Receiver {
         eventContract.setTierActive(VIP_TIER_ID, false);
 
         vm.prank(user1);
-        vm.expectRevert(Errors.TierNotActive.selector);
+        vm.expectRevert(SimplrErrors.TierNotActive.selector);
         eventContract.buyTickets{value: VIP_PRICE}(VIP_TIER_ID, 1);
     }
 
     function test_buyTickets_revertsIfExceedsMaxSupply() public {
         vm.prank(user1);
-        vm.expectRevert(Errors.ExceedsMaxSupply.selector);
+        vm.expectRevert(SimplrErrors.ExceedsMaxSupply.selector);
         eventContract.buyTickets{value: VIP_PRICE * (VIP_MAX_SUPPLY + 1)}(VIP_TIER_ID, VIP_MAX_SUPPLY + 1);
     }
 
     function test_buyTickets_revertsIfIncorrectPayment() public {
         vm.prank(user1);
-        vm.expectRevert(Errors.IncorrectPayment.selector);
+        vm.expectRevert(SimplrErrors.IncorrectPayment.selector);
         eventContract.buyTickets{value: VIP_PRICE - 1}(VIP_TIER_ID, 1);
     }
 
     function test_buyTickets_revertsIfZeroQuantity() public {
         vm.prank(user1);
-        vm.expectRevert(Errors.ZeroQuantity.selector);
+        vm.expectRevert(SimplrErrors.ZeroQuantity.selector);
         eventContract.buyTickets{value: 0}(VIP_TIER_ID, 0);
     }
 
     function test_buyTickets_revertsIfTierDoesNotExist() public {
         vm.prank(user1);
-        vm.expectRevert(Errors.TierDoesNotExist.selector);
+        vm.expectRevert(SimplrErrors.TierDoesNotExist.selector);
         eventContract.buyTickets{value: 1 ether}(999, 1);
     }
 
     // ============ Redeem Ticket Tests ============
 
     function test_redeemTicket_burnsTicketAndMintsAccessPass() public {
-        // Buy a ticket first
-        vm.prank(user1);
-        eventContract.buyTickets{value: VIP_PRICE}(VIP_TIER_ID, 1);
-
-        // Create signature
-        uint256 deadline = block.timestamp + 1 hours;
-        bytes32 digest = _getRedeemDigest(user1, VIP_TIER_ID, eventContract.nonces(user1), deadline);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(uint256(keccak256(abi.encodePacked("user1"))), digest);
-        bytes memory signature = abi.encodePacked(r, s, v);
-
         // Use vm.createWallet for signing
         (address signer, uint256 signerPk) = makeAddrAndKey("signer");
 
@@ -357,10 +365,10 @@ contract EventTest is Test, IERC1155Receiver {
         eventContract.buyTickets{value: VIP_PRICE}(VIP_TIER_ID, 1);
 
         // Create proper signature
-        deadline = block.timestamp + 1 hours;
-        digest = _getRedeemDigest(signer, VIP_TIER_ID, eventContract.nonces(signer), deadline);
-        (v, r, s) = vm.sign(signerPk, digest);
-        signature = abi.encodePacked(r, s, v);
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes32 digest = _getRedeemDigest(signer, VIP_TIER_ID, eventContract.nonces(signer), deadline);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPk, digest);
+        bytes memory signature = abi.encodePacked(r, s, v);
 
         // Check initial state
         assertEq(eventContract.balanceOf(signer, VIP_TIER_ID), 1);
@@ -373,7 +381,6 @@ contract EventTest is Test, IERC1155Receiver {
         assertEq(eventContract.balanceOf(signer, VIP_TIER_ID), 0);
 
         // Check access pass was minted
-        AccessPassNFT accessPass = AccessPassNFT(eventContract.accessPassNFT());
         assertEq(accessPass.ownerOf(1), signer);
     }
 
@@ -408,7 +415,7 @@ contract EventTest is Test, IERC1155Receiver {
         bytes memory signature = abi.encodePacked(r, s, v);
 
         vm.prank(user2);
-        vm.expectRevert(Errors.NotGatekeeper.selector);
+        vm.expectRevert(SimplrErrors.NotGatekeeper.selector);
         eventContract.redeemTicket(signer, VIP_TIER_ID, deadline, signature);
     }
 
@@ -425,7 +432,7 @@ contract EventTest is Test, IERC1155Receiver {
         bytes memory signature = abi.encodePacked(r, s, v);
 
         vm.prank(gatekeeper1);
-        vm.expectRevert(Errors.SignatureExpired.selector);
+        vm.expectRevert(SimplrErrors.SignatureExpired.selector);
         eventContract.redeemTicket(signer, VIP_TIER_ID, deadline, signature);
     }
 
@@ -443,7 +450,7 @@ contract EventTest is Test, IERC1155Receiver {
         bytes memory signature = abi.encodePacked(r, s, v);
 
         vm.prank(gatekeeper1);
-        vm.expectRevert(Errors.InvalidSignature.selector);
+        vm.expectRevert(SimplrErrors.InvalidSignature.selector);
         eventContract.redeemTicket(signer, VIP_TIER_ID, deadline, signature);
     }
 
@@ -458,7 +465,7 @@ contract EventTest is Test, IERC1155Receiver {
         bytes memory signature = abi.encodePacked(r, s, v);
 
         vm.prank(gatekeeper1);
-        vm.expectRevert(Errors.InsufficientTickets.selector);
+        vm.expectRevert(SimplrErrors.InsufficientTickets.selector);
         eventContract.redeemTicket(signer, VIP_TIER_ID, deadline, signature);
     }
 
@@ -491,7 +498,7 @@ contract EventTest is Test, IERC1155Receiver {
         eventContract.withdraw(admin);
     }
 
-    function test_withdraw_revertsIfNotAdmin() public {
+    function test_withdraw_revertsIfNotOwner() public {
         vm.prank(user1);
         eventContract.buyTickets{value: VIP_PRICE}(VIP_TIER_ID, 1);
 

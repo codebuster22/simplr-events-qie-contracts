@@ -27,6 +27,11 @@ interface IAccessPassNFT {
 
     // ============ Functions ============
 
+    /// @notice Sets the Event contract address that can mint access passes
+    /// @dev Can only be called once, typically by the factory after deployment
+    /// @param eventContract_ The Event contract address
+    function setEventContract(address eventContract_) external;
+
     /// @notice Mints a new access pass
     /// @dev Only callable by the parent Event contract
     /// @param to The address to mint the access pass to
@@ -53,7 +58,7 @@ interface IAccessPassNFT {
     /// @return The lock duration in seconds (default 24 hours)
     function lockDuration() external view returns (uint256);
 
-    /// @notice Returns the Event contract that deployed this AccessPassNFT
+    /// @notice Returns the Event contract that can mint access passes
     /// @return The Event contract address
     function eventContract() external view returns (address);
 }

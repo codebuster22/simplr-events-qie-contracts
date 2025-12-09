@@ -7,7 +7,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
 import {IMarketplace} from "./interfaces/IMarketplace.sol";
-import {Errors} from "./libraries/Errors.sol";
+import {SimplrErrors} from "./libraries/SimplrErrors.sol";
 
 /// @title Marketplace
 /// @notice Secondary market for trading ERC-1155 tickets with ERC-2981 royalty support
@@ -34,13 +34,13 @@ contract Marketplace is Ownable, Pausable, ReentrancyGuard, IMarketplace {
         uint256 expirationTime
     ) external whenNotPaused returns (uint256 listingId) {
         if (quantity == 0) {
-            revert Errors.ZeroQuantity();
+            revert SimplrErrors.ZeroQuantity();
         }
         if (pricePerUnit == 0) {
-            revert Errors.ZeroPrice();
+            revert SimplrErrors.ZeroPrice();
         }
         if (expirationTime <= block.timestamp) {
-            revert Errors.InvalidExpiration();
+            revert SimplrErrors.InvalidExpiration();
         }
 
         listingId = _listings.length;
@@ -69,13 +69,13 @@ contract Marketplace is Ownable, Pausable, ReentrancyGuard, IMarketplace {
     /// @inheritdoc IMarketplace
     function cancelListing(uint256 listingId) external {
         if (listingId >= _listings.length) {
-            revert Errors.ListingDoesNotExist();
+            revert SimplrErrors.ListingDoesNotExist();
         }
 
         Listing storage listing = _listings[listingId];
 
         if (listing.seller != msg.sender) {
-            revert Errors.NotSeller();
+            revert SimplrErrors.NotSeller();
         }
 
         listing.active = false;
@@ -86,17 +86,17 @@ contract Marketplace is Ownable, Pausable, ReentrancyGuard, IMarketplace {
     /// @inheritdoc IMarketplace
     function updateListingPrice(uint256 listingId, uint256 newPrice) external {
         if (listingId >= _listings.length) {
-            revert Errors.ListingDoesNotExist();
+            revert SimplrErrors.ListingDoesNotExist();
         }
 
         Listing storage listing = _listings[listingId];
 
         if (listing.seller != msg.sender) {
-            revert Errors.NotSeller();
+            revert SimplrErrors.NotSeller();
         }
 
         if (newPrice == 0) {
-            revert Errors.ZeroPrice();
+            revert SimplrErrors.ZeroPrice();
         }
 
         listing.pricePerUnit = newPrice;
@@ -110,30 +110,30 @@ contract Marketplace is Ownable, Pausable, ReentrancyGuard, IMarketplace {
         uint256 quantity
     ) external payable whenNotPaused nonReentrant {
         if (listingId >= _listings.length) {
-            revert Errors.ListingDoesNotExist();
+            revert SimplrErrors.ListingDoesNotExist();
         }
 
         if (quantity == 0) {
-            revert Errors.ZeroQuantity();
+            revert SimplrErrors.ZeroQuantity();
         }
 
         Listing storage listing = _listings[listingId];
 
         if (!listing.active) {
-            revert Errors.ListingNotActive();
+            revert SimplrErrors.ListingNotActive();
         }
 
         if (block.timestamp >= listing.expirationTime) {
-            revert Errors.ListingExpired();
+            revert SimplrErrors.ListingExpired();
         }
 
         if (quantity > listing.quantity) {
-            revert Errors.InsufficientQuantity();
+            revert SimplrErrors.InsufficientQuantity();
         }
 
         uint256 totalPrice = listing.pricePerUnit * quantity;
         if (msg.value != totalPrice) {
-            revert Errors.IncorrectPayment();
+            revert SimplrErrors.IncorrectPayment();
         }
 
         // Update listing
@@ -162,14 +162,14 @@ contract Marketplace is Ownable, Pausable, ReentrancyGuard, IMarketplace {
         if (royaltyAmount > 0 && royaltyReceiver != address(0)) {
             (bool royaltySuccess,) = royaltyReceiver.call{value: royaltyAmount}("");
             if (!royaltySuccess) {
-                revert Errors.TransferFailed();
+                revert SimplrErrors.TransferFailed();
             }
         }
 
         // Transfer proceeds to seller
         (bool sellerSuccess,) = listing.seller.call{value: sellerProceeds}("");
         if (!sellerSuccess) {
-            revert Errors.TransferFailed();
+            revert SimplrErrors.TransferFailed();
         }
 
         emit ListingPurchased(

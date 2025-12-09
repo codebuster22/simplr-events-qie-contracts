@@ -1,5 +1,7 @@
 ## Foundry
 
+forge script script/Deploy.s.sol:Deploy --private-key $PRIVATE_KEY --rpc-url $RPC_URL --broadcast --verify --verifier blockscout --verifier-url 'https://testnet.qie.digital/api/' --slow
+
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
 Foundry consists of:

@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Test, console} from "forge-std/Test.sol";
 import {AccessPassNFT} from "../src/AccessPassNFT.sol";
 import {IAccessPassNFT} from "../src/interfaces/IAccessPassNFT.sol";
-import {Errors} from "../src/libraries/Errors.sol";
+import {SimplrErrors} from "../src/libraries/SimplrErrors.sol";
 
 contract AccessPassNFTTest is Test {
     AccessPassNFT public accessPass;
@@ -22,9 +22,11 @@ contract AccessPassNFTTest is Test {
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
 
-        // Deploy AccessPassNFT as if it were deployed by the Event contract
-        vm.prank(eventContract);
+        // Deploy AccessPassNFT
         accessPass = new AccessPassNFT(NAME, SYMBOL, BASE_URI);
+
+        // Link to event contract
+        accessPass.setEventContract(eventContract);
     }
 
     // ============ Constructor Tests ============
@@ -37,8 +39,21 @@ contract AccessPassNFTTest is Test {
         assertEq(accessPass.symbol(), SYMBOL);
     }
 
-    function test_constructor_setsEventContractCorrectly() public view {
+    function test_setEventContract_setsEventContractCorrectly() public view {
         assertEq(accessPass.eventContract(), eventContract);
+    }
+
+    function test_setEventContract_revertsOnSecondCall() public {
+        vm.expectRevert(SimplrErrors.EventContractAlreadySet.selector);
+        accessPass.setEventContract(user1);
+    }
+
+    function test_setEventContract_revertsOnZeroAddress() public {
+        // Deploy new AccessPassNFT without setting event contract
+        AccessPassNFT newAccessPass = new AccessPassNFT(NAME, SYMBOL, BASE_URI);
+
+        vm.expectRevert(SimplrErrors.ZeroAddress.selector);
+        newAccessPass.setEventContract(address(0));
     }
 
     function test_constructor_setsLockDurationTo24Hours() public view {
@@ -91,7 +106,7 @@ contract AccessPassNFTTest is Test {
 
     function test_mint_revertsWhenCalledByNonEventContract() public {
         vm.prank(user1);
-        vm.expectRevert(Errors.NotAuthorizedMinter.selector);
+        vm.expectRevert(SimplrErrors.NotAuthorizedMinter.selector);
         accessPass.mint(user1, 1);
     }
 
@@ -119,7 +134,7 @@ contract AccessPassNFTTest is Test {
         uint256 tokenId = accessPass.mint(user1, 1);
 
         vm.prank(user1);
-        vm.expectRevert(Errors.TransferLocked.selector);
+        vm.expectRevert(SimplrErrors.TransferLocked.selector);
         accessPass.transferFrom(user1, user2, tokenId);
     }
 
@@ -128,7 +143,7 @@ contract AccessPassNFTTest is Test {
         uint256 tokenId = accessPass.mint(user1, 1);
 
         vm.prank(user1);
-        vm.expectRevert(Errors.TransferLocked.selector);
+        vm.expectRevert(SimplrErrors.TransferLocked.selector);
         accessPass.safeTransferFrom(user1, user2, tokenId);
     }
 

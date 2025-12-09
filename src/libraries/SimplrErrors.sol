@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// @title Errors
+/// @title SimplrErrors
 /// @notice Custom errors for the Event Ticketing System
-library Errors {
+library SimplrErrors {
     // ============ Event Errors ============
 
     /// @notice Thrown when trying to buy tickets for an inactive tier
@@ -52,6 +52,9 @@ library Errors {
 
     /// @notice Thrown when caller is not authorized to mint
     error NotAuthorizedMinter();
+
+    /// @notice Thrown when event contract is already set
+    error EventContractAlreadySet();
 
     // ============ Marketplace Errors ============
 
