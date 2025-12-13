@@ -1,24 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IAccessPassNFT} from "./interfaces/IAccessPassNFT.sol";
 import {SimplrErrors} from "./libraries/SimplrErrors.sol";
 
 /// @title AccessPassNFT
 /// @notice ERC-721 NFT representing venue access after ticket redemption
-/// @dev Non-transferable for 24 hours after mint (soulbound period)
-contract AccessPassNFT is ERC721, IAccessPassNFT {
+/// @dev Non-transferable for 24 hours after mint (soulbound period). Deployed as EIP-1167 clone.
+contract AccessPassNFT is Initializable, ERC721Upgradeable, IAccessPassNFT {
     using Strings for uint256;
 
     // ============ State Variables ============
 
     /// @notice The Event contract that can mint access passes
     address public eventContract;
-
-    /// @notice Whether the event contract has been set
-    bool private _eventContractSet;
 
     /// @notice The lock duration for transfers (24 hours)
     uint256 public constant lockDuration = 24 hours;
@@ -34,27 +32,31 @@ contract AccessPassNFT is ERC721, IAccessPassNFT {
 
     // ============ Constructor ============
 
-    /// @notice Deploys the AccessPassNFT contract
-    /// @param name_ The name of the NFT collection
-    /// @param symbol_ The symbol of the NFT collection
-    /// @param baseURI_ The base URI for token metadata
-    constructor(string memory name_, string memory symbol_, string memory baseURI_) ERC721(name_, symbol_) {
-        _baseTokenURI = baseURI_;
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
     }
 
-    // ============ External Functions ============
+    // ============ Initialization ============
 
     /// @inheritdoc IAccessPassNFT
-    function setEventContract(address eventContract_) external {
-        if (_eventContractSet) {
-            revert SimplrErrors.EventContractAlreadySet();
-        }
+    function initialize(
+        string memory name_,
+        string memory symbol_,
+        string memory baseURI_,
+        address eventContract_
+    ) external initializer {
+        __ERC721_init(name_, symbol_);
+
         if (eventContract_ == address(0)) {
             revert SimplrErrors.ZeroAddress();
         }
+
+        _baseTokenURI = baseURI_;
         eventContract = eventContract_;
-        _eventContractSet = true;
     }
+
+    // ============ External Functions ============
 
     /// @inheritdoc IAccessPassNFT
     function mint(address to, uint256 tierId) external returns (uint256 tokenId) {

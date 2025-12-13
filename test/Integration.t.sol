@@ -16,6 +16,7 @@ contract IntegrationTest is Test, IERC1155Receiver {
     EventFactory public factory;
     Marketplace public marketplace;
     Event public eventImplementation;
+    AccessPassNFT public accessPassNFTImplementation;
 
     address public owner;
     address public organizer;
@@ -39,11 +40,12 @@ contract IntegrationTest is Test, IERC1155Receiver {
         vm.deal(buyer1, 100 ether);
         vm.deal(buyer2, 100 ether);
 
-        // Deploy infrastructure
+        // Deploy implementations
         eventImplementation = new Event();
+        accessPassNFTImplementation = new AccessPassNFT();
 
         vm.startPrank(owner);
-        factory = new EventFactory(address(eventImplementation));
+        factory = new EventFactory(address(eventImplementation), address(accessPassNFTImplementation));
         marketplace = new Marketplace();
         vm.stopPrank();
     }

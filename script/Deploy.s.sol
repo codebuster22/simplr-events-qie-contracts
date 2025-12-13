@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Script, console} from "forge-std/Script.sol";
 import {EventFactory} from "../src/EventFactory.sol";
 import {Event} from "../src/Event.sol";
+import {AccessPassNFT} from "../src/AccessPassNFT.sol";
 import {Marketplace} from "../src/Marketplace.sol";
 import {IEvent} from "../src/interfaces/IEvent.sol";
 import {IMarketplace} from "../src/interfaces/IMarketplace.sol";
@@ -47,8 +48,12 @@ contract Deploy is Script {
         Event eventImplementation = new Event();
         console.log("Event Implementation deployed at:", address(eventImplementation));
 
-        // Deploy EventFactory with implementation
-        EventFactory factory = new EventFactory(address(eventImplementation));
+        // Deploy AccessPassNFT implementation (upgradeable)
+        AccessPassNFT accessPassNFTImplementation = new AccessPassNFT();
+        console.log("AccessPassNFT Implementation deployed at:", address(accessPassNFTImplementation));
+
+        // Deploy EventFactory with both implementations
+        EventFactory factory = new EventFactory(address(eventImplementation), address(accessPassNFTImplementation));
         console.log("EventFactory deployed at:", address(factory));
 
         // Deploy Marketplace
@@ -110,6 +115,7 @@ contract Deploy is Script {
 
         console.log("\n=== Deployment Summary ===");
         console.log("Event Implementation:", address(eventImplementation));
+        console.log("AccessPassNFT Implementation:", address(accessPassNFTImplementation));
         console.log("EventFactory:", address(factory));
         console.log("Marketplace:", address(marketplace));
         console.log("\n=== Sample Event ===");
@@ -138,7 +144,10 @@ contract DeployLocal is Script {
         Event eventImplementation = new Event();
         console.log("Event Implementation:", address(eventImplementation));
 
-        EventFactory factory = new EventFactory(address(eventImplementation));
+        AccessPassNFT accessPassNFTImplementation = new AccessPassNFT();
+        console.log("AccessPassNFT Implementation:", address(accessPassNFTImplementation));
+
+        EventFactory factory = new EventFactory(address(eventImplementation), address(accessPassNFTImplementation));
         console.log("EventFactory:", address(factory));
 
         Marketplace marketplace = new Marketplace();

@@ -23,10 +23,18 @@ interface IAccessPassNFT {
 
     // ============ Functions ============
 
-    /// @notice Sets the Event contract address that can mint access passes
-    /// @dev Can only be called once, typically by the factory after deployment
-    /// @param eventContract_ The Event contract address
-    function setEventContract(address eventContract_) external;
+    /// @notice Initializes the AccessPassNFT clone
+    /// @dev Can only be called once during deployment by the factory
+    /// @param name_ The name of the NFT collection
+    /// @param symbol_ The symbol of the NFT collection
+    /// @param baseURI_ The base URI for token metadata
+    /// @param eventContract_ The Event contract address that can mint
+    function initialize(
+        string memory name_,
+        string memory symbol_,
+        string memory baseURI_,
+        address eventContract_
+    ) external;
 
     /// @notice Mints a new access pass
     /// @dev Only callable by the parent Event contract

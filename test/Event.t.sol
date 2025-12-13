@@ -14,6 +14,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 contract EventTest is Test, IERC1155Receiver {
     Event public eventImplementation;
     Event public eventContract;
+    AccessPassNFT public accessPassImplementation;
     AccessPassNFT public accessPass;
 
     address public admin;
@@ -68,18 +69,17 @@ contract EventTest is Test, IERC1155Receiver {
         // Setup initial gatekeepers
         initialGatekeepers.push(gatekeeper1);
 
-        // Deploy Event implementation
+        // Deploy implementations
         eventImplementation = new Event();
+        accessPassImplementation = new AccessPassNFT();
 
         // Clone the Event implementation (like the factory does)
         address eventAddress = Clones.clone(address(eventImplementation));
         eventContract = Event(eventAddress);
 
-        // Deploy AccessPassNFT
-        accessPass = new AccessPassNFT("Test Event Access Pass", "TE-AP", "https://api.example.com/");
-
-        // Link AccessPassNFT to Event
-        accessPass.setEventContract(address(eventContract));
+        // Clone AccessPassNFT implementation and initialize
+        accessPass = AccessPassNFT(Clones.clone(address(accessPassImplementation)));
+        accessPass.initialize("Test Event Access Pass", "TE-AP", "https://api.example.com/", eventAddress);
 
         // Initialize Event contract
         eventContract.initialize(eventConfig, tierConfigs, initialGatekeepers, admin, address(accessPass));

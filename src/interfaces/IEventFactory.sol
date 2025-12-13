@@ -52,6 +52,10 @@ interface IEventFactory {
     /// @return The implementation address
     function implementation() external view returns (address);
 
+    /// @notice Returns the AccessPassNFT implementation contract address
+    /// @return The implementation address
+    function accessPassNFTImplementation() external view returns (address);
+
     /// @notice Checks if an address is a valid Event contract created by this factory
     /// @param eventAddress The address to check
     /// @return True if the address is a valid Event contract

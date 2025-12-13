@@ -2,11 +2,13 @@
 pragma solidity ^0.8.20;
 
 import {Test, console} from "forge-std/Test.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AccessPassNFT} from "../src/AccessPassNFT.sol";
 import {IAccessPassNFT} from "../src/interfaces/IAccessPassNFT.sol";
 import {SimplrErrors} from "../src/libraries/SimplrErrors.sol";
 
 contract AccessPassNFTTest is Test {
+    AccessPassNFT public accessPassImplementation;
     AccessPassNFT public accessPass;
 
     address public eventContract;
@@ -22,42 +24,48 @@ contract AccessPassNFTTest is Test {
         user1 = makeAddr("user1");
         user2 = makeAddr("user2");
 
-        // Deploy AccessPassNFT
-        accessPass = new AccessPassNFT(NAME, SYMBOL, BASE_URI);
+        // Deploy AccessPassNFT implementation
+        accessPassImplementation = new AccessPassNFT();
 
-        // Link to event contract
-        accessPass.setEventContract(eventContract);
+        // Clone and initialize
+        accessPass = AccessPassNFT(Clones.clone(address(accessPassImplementation)));
+        accessPass.initialize(NAME, SYMBOL, BASE_URI, eventContract);
     }
 
-    // ============ Constructor Tests ============
+    // ============ Initialization Tests ============
 
-    function test_constructor_setsNameCorrectly() public view {
+    function test_initialize_setsNameCorrectly() public view {
         assertEq(accessPass.name(), NAME);
     }
 
-    function test_constructor_setsSymbolCorrectly() public view {
+    function test_initialize_setsSymbolCorrectly() public view {
         assertEq(accessPass.symbol(), SYMBOL);
     }
 
-    function test_setEventContract_setsEventContractCorrectly() public view {
+    function test_initialize_setsEventContractCorrectly() public view {
         assertEq(accessPass.eventContract(), eventContract);
     }
 
-    function test_setEventContract_revertsOnSecondCall() public {
-        vm.expectRevert(SimplrErrors.EventContractAlreadySet.selector);
-        accessPass.setEventContract(user1);
+    function test_initialize_revertsOnSecondCall() public {
+        vm.expectRevert();
+        accessPass.initialize(NAME, SYMBOL, BASE_URI, user1);
     }
 
-    function test_setEventContract_revertsOnZeroAddress() public {
-        // Deploy new AccessPassNFT without setting event contract
-        AccessPassNFT newAccessPass = new AccessPassNFT(NAME, SYMBOL, BASE_URI);
+    function test_initialize_revertsOnZeroAddress() public {
+        // Clone a new AccessPassNFT
+        AccessPassNFT newAccessPass = AccessPassNFT(Clones.clone(address(accessPassImplementation)));
 
         vm.expectRevert(SimplrErrors.ZeroAddress.selector);
-        newAccessPass.setEventContract(address(0));
+        newAccessPass.initialize(NAME, SYMBOL, BASE_URI, address(0));
     }
 
-    function test_constructor_setsLockDurationTo24Hours() public view {
+    function test_initialize_setsLockDurationTo24Hours() public view {
         assertEq(accessPass.lockDuration(), 24 hours);
+    }
+
+    function test_implementation_cannotBeInitialized() public {
+        vm.expectRevert();
+        accessPassImplementation.initialize(NAME, SYMBOL, BASE_URI, eventContract);
     }
 
     // ============ Mint Tests ============

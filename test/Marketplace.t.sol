@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Test, console} from "forge-std/Test.sol";
 import {Marketplace} from "../src/Marketplace.sol";
 import {Event} from "../src/Event.sol";
+import {AccessPassNFT} from "../src/AccessPassNFT.sol";
 import {EventFactory} from "../src/EventFactory.sol";
 import {IMarketplace} from "../src/interfaces/IMarketplace.sol";
 import {IEvent} from "../src/interfaces/IEvent.sol";
@@ -35,10 +36,13 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         vm.deal(seller, 100 ether);
         vm.deal(buyer, 100 ether);
 
-        // Deploy factory and marketplace
+        // Deploy implementations
         Event implementation = new Event();
+        AccessPassNFT accessPassNFTImplementation = new AccessPassNFT();
+
+        // Deploy factory and marketplace
         vm.prank(owner);
-        factory = new EventFactory(address(implementation));
+        factory = new EventFactory(address(implementation), address(accessPassNFTImplementation));
 
         vm.prank(owner);
         marketplace = new Marketplace();

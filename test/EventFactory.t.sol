@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Test, console} from "forge-std/Test.sol";
 import {EventFactory} from "../src/EventFactory.sol";
 import {Event} from "../src/Event.sol";
+import {AccessPassNFT} from "../src/AccessPassNFT.sol";
 import {IEventFactory} from "../src/interfaces/IEventFactory.sol";
 import {IEvent} from "../src/interfaces/IEvent.sol";
 import {SimplrErrors} from "../src/libraries/SimplrErrors.sol";
@@ -11,6 +12,7 @@ import {SimplrErrors} from "../src/libraries/SimplrErrors.sol";
 contract EventFactoryTest is Test {
     EventFactory public factory;
     Event public eventImplementation;
+    AccessPassNFT public accessPassNFTImplementation;
 
     address public owner;
     address public organizer1;
@@ -27,12 +29,13 @@ contract EventFactoryTest is Test {
         organizer2 = makeAddr("organizer2");
         gatekeeper1 = makeAddr("gatekeeper1");
 
-        // Deploy implementation
+        // Deploy implementations
         eventImplementation = new Event();
+        accessPassNFTImplementation = new AccessPassNFT();
 
-        // Deploy factory
+        // Deploy factory with both implementations
         vm.prank(owner);
-        factory = new EventFactory(address(eventImplementation));
+        factory = new EventFactory(address(eventImplementation), address(accessPassNFTImplementation));
 
         // Setup event config
         eventConfig =
@@ -49,6 +52,10 @@ contract EventFactoryTest is Test {
 
     function test_constructor_setsImplementation() public view {
         assertEq(factory.implementation(), address(eventImplementation));
+    }
+
+    function test_constructor_setsAccessPassNFTImplementation() public view {
+        assertEq(factory.accessPassNFTImplementation(), address(accessPassNFTImplementation));
     }
 
     function test_constructor_setsOwner() public view {

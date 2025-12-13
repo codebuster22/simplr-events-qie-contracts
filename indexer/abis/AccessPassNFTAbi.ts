@@ -1,23 +1,7 @@
 export const AccessPassNFTAbi = [
   {
     "type": "constructor",
-    "inputs": [
-      {
-        "name": "name_",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "symbol_",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "baseURI_",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable"
   },
   {
@@ -119,6 +103,34 @@ export const AccessPassNFTAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "name_",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "symbol_",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "baseURI_",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "eventContract_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -303,19 +315,6 @@ export const AccessPassNFTAbi = [
   },
   {
     "type": "function",
-    "name": "setEventContract",
-    "inputs": [
-      {
-        "name": "eventContract_",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "supportsInterface",
     "inputs": [
       {
@@ -484,6 +483,19 @@ export const AccessPassNFTAbi = [
   },
   {
     "type": "event",
+    "name": "Initialized",
+    "inputs": [
+      {
+        "name": "version",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Transfer",
     "inputs": [
       {
@@ -612,12 +624,17 @@ export const AccessPassNFTAbi = [
   },
   {
     "type": "error",
-    "name": "EventContractAlreadySet",
+    "name": "InvalidInitialization",
     "inputs": []
   },
   {
     "type": "error",
     "name": "NotAuthorizedMinter",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotInitializing",
     "inputs": []
   },
   {

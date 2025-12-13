@@ -5,8 +5,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IEventFactory} from "./interfaces/IEventFactory.sol";
 import {IEvent} from "./interfaces/IEvent.sol";
+import {IAccessPassNFT} from "./interfaces/IAccessPassNFT.sol";
 import {Event} from "./Event.sol";
-import {AccessPassNFT} from "./AccessPassNFT.sol";
 
 /// @title EventFactory
 /// @notice Factory for deploying Event contracts using EIP-1167 minimal proxies
@@ -16,6 +16,9 @@ contract EventFactory is Ownable, IEventFactory {
 
     /// @notice The Event implementation contract address
     address public immutable implementation;
+
+    /// @notice The AccessPassNFT implementation contract address
+    address public immutable accessPassNFTImplementation;
 
     /// @notice Array of all created event addresses
     address[] private _events;
@@ -28,10 +31,12 @@ contract EventFactory is Ownable, IEventFactory {
 
     // ============ Constructor ============
 
-    /// @notice Deploys the EventFactory with the Event implementation
+    /// @notice Deploys the EventFactory with Event and AccessPassNFT implementations
     /// @param implementation_ The Event implementation contract address
-    constructor(address implementation_) Ownable(msg.sender) {
+    /// @param accessPassNFTImplementation_ The AccessPassNFT implementation contract address
+    constructor(address implementation_, address accessPassNFTImplementation_) Ownable(msg.sender) {
         implementation = implementation_;
+        accessPassNFTImplementation = accessPassNFTImplementation_;
     }
 
     // ============ External Functions ============
@@ -45,18 +50,19 @@ contract EventFactory is Ownable, IEventFactory {
         // 1. Clone the Event implementation
         eventAddress = Clones.clone(implementation);
 
-        // 2. Deploy AccessPassNFT
-        AccessPassNFT accessPass = new AccessPassNFT(
+        // 2. Clone AccessPassNFT implementation
+        address accessPassAddress = Clones.clone(accessPassNFTImplementation);
+
+        // 3. Initialize AccessPassNFT with Event address
+        IAccessPassNFT(accessPassAddress).initialize(
             string(abi.encodePacked(eventConfig.name, " Access Pass")),
             string(abi.encodePacked(eventConfig.symbol, "-AP")),
-            eventConfig.baseURI
+            eventConfig.baseURI,
+            eventAddress
         );
 
-        // 3. Link AccessPassNFT to Event
-        accessPass.setEventContract(eventAddress);
-
         // 4. Initialize the Event with AccessPassNFT address
-        Event(eventAddress).initialize(eventConfig, tiers, initialGatekeepers, msg.sender, address(accessPass));
+        Event(eventAddress).initialize(eventConfig, tiers, initialGatekeepers, msg.sender, accessPassAddress);
 
         // Track the event
         uint256 eventId = _events.length;
@@ -64,7 +70,7 @@ contract EventFactory is Ownable, IEventFactory {
         _isEvent[eventAddress] = true;
         _eventsByCreator[msg.sender].push(eventAddress);
 
-        emit EventCreated(eventAddress, msg.sender, eventConfig.name, eventId, address(accessPass));
+        emit EventCreated(eventAddress, msg.sender, eventConfig.name, eventId, accessPassAddress);
     }
 
     // ============ View Functions ============
