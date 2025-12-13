@@ -42,18 +42,8 @@ contract ForkTest is Test {
 
         // Setup tier configs
         IEvent.TierConfig[] memory tiers = new IEvent.TierConfig[](2);
-        tiers[0] = IEvent.TierConfig({
-            tierId: 1,
-            tierName: "VIP",
-            price: 0.1 ether,
-            maxSupply: 100
-        });
-        tiers[1] = IEvent.TierConfig({
-            tierId: 2,
-            tierName: "General Admission",
-            price: 0.01 ether,
-            maxSupply: 1000
-        });
+        tiers[0] = IEvent.TierConfig({tierId: 1, tierName: "VIP", price: 0.1 ether, maxSupply: 100});
+        tiers[1] = IEvent.TierConfig({tierId: 2, tierName: "General Admission", price: 0.01 ether, maxSupply: 1000});
 
         // No initial gatekeepers
         address[] memory gatekeepers = new address[](0);

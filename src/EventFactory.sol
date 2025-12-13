@@ -56,13 +56,7 @@ contract EventFactory is Ownable, IEventFactory {
         accessPass.setEventContract(eventAddress);
 
         // 4. Initialize the Event with AccessPassNFT address
-        Event(eventAddress).initialize(
-            eventConfig,
-            tiers,
-            initialGatekeepers,
-            msg.sender,
-            address(accessPass)
-        );
+        Event(eventAddress).initialize(eventConfig, tiers, initialGatekeepers, msg.sender, address(accessPass));
 
         // Track the event
         uint256 eventId = _events.length;
@@ -70,7 +64,7 @@ contract EventFactory is Ownable, IEventFactory {
         _isEvent[eventAddress] = true;
         _eventsByCreator[msg.sender].push(eventAddress);
 
-        emit EventCreated(eventAddress, msg.sender, eventConfig.name, eventId);
+        emit EventCreated(eventAddress, address(accessPass), msg.sender, eventConfig.name, eventId);
     }
 
     // ============ View Functions ============

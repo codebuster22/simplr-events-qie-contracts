@@ -51,12 +51,20 @@ contract IntegrationTest is Test, IERC1155Receiver {
     // ============ IERC1155Receiver ============
 
     function onERC1155Received(address, address, uint256, uint256, bytes calldata)
-        external pure override returns (bytes4) {
+        external
+        pure
+        override
+        returns (bytes4)
+    {
         return this.onERC1155Received.selector;
     }
 
     function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
-        external pure override returns (bytes4) {
+        external
+        pure
+        override
+        returns (bytes4)
+    {
         return this.onERC1155BatchReceived.selector;
     }
 
@@ -77,18 +85,9 @@ contract IntegrationTest is Test, IERC1155Receiver {
         });
 
         IEvent.TierConfig[] memory tiers = new IEvent.TierConfig[](2);
-        tiers[0] = IEvent.TierConfig({
-            tierId: VIP_TIER_ID,
-            tierName: "VIP",
-            price: VIP_PRICE,
-            maxSupply: 100
-        });
-        tiers[1] = IEvent.TierConfig({
-            tierId: GA_TIER_ID,
-            tierName: "General Admission",
-            price: GA_PRICE,
-            maxSupply: 1000
-        });
+        tiers[0] = IEvent.TierConfig({tierId: VIP_TIER_ID, tierName: "VIP", price: VIP_PRICE, maxSupply: 100});
+        tiers[1] =
+            IEvent.TierConfig({tierId: GA_TIER_ID, tierName: "General Admission", price: GA_PRICE, maxSupply: 1000});
 
         address[] memory gatekeepers = new address[](1);
         gatekeepers[0] = gatekeeper;
@@ -146,12 +145,7 @@ contract IntegrationTest is Test, IERC1155Receiver {
         });
 
         IEvent.TierConfig[] memory tiers = new IEvent.TierConfig[](1);
-        tiers[0] = IEvent.TierConfig({
-            tierId: VIP_TIER_ID,
-            tierName: "VIP",
-            price: VIP_PRICE,
-            maxSupply: 100
-        });
+        tiers[0] = IEvent.TierConfig({tierId: VIP_TIER_ID, tierName: "VIP", price: VIP_PRICE, maxSupply: 100});
 
         address[] memory gatekeepers = new address[](0);
 
@@ -171,18 +165,12 @@ contract IntegrationTest is Test, IERC1155Receiver {
         uint256 expiration = block.timestamp + 7 days;
 
         vm.prank(buyer1);
-        uint256 listingId = marketplace.createListing(
-            eventAddress,
-            VIP_TIER_ID,
-            3,
-            listingPrice,
-            expiration
-        );
+        uint256 listingId = marketplace.createListing(eventAddress, VIP_TIER_ID, 3, listingPrice, expiration);
 
         // 4. Buyer2 purchases from marketplace
         uint256 quantity = 2;
         uint256 totalPrice = listingPrice * quantity;
-        uint256 royaltyAmount = totalPrice * ROYALTY_BPS / 10000;
+        uint256 royaltyAmount = (totalPrice * ROYALTY_BPS) / 10000;
         uint256 sellerProceeds = totalPrice - royaltyAmount;
 
         uint256 buyer1BalanceBefore = buyer1.balance;
@@ -211,12 +199,7 @@ contract IntegrationTest is Test, IERC1155Receiver {
         });
 
         IEvent.TierConfig[] memory tiers = new IEvent.TierConfig[](1);
-        tiers[0] = IEvent.TierConfig({
-            tierId: VIP_TIER_ID,
-            tierName: "Early Bird",
-            price: VIP_PRICE,
-            maxSupply: 100
-        });
+        tiers[0] = IEvent.TierConfig({tierId: VIP_TIER_ID, tierName: "Early Bird", price: VIP_PRICE, maxSupply: 100});
 
         address[] memory gatekeepers = new address[](0);
 
@@ -265,20 +248,11 @@ contract IntegrationTest is Test, IERC1155Receiver {
     /// @notice Test multiple events from same organizer
     function test_fullFlow_multipleEvents() public {
         // Create first event
-        IEvent.EventConfig memory config1 = IEvent.EventConfig({
-            name: "Event 1",
-            symbol: "E1",
-            baseURI: "https://api.event1.com/",
-            royaltyBps: 500
-        });
+        IEvent.EventConfig memory config1 =
+            IEvent.EventConfig({name: "Event 1", symbol: "E1", baseURI: "https://api.event1.com/", royaltyBps: 500});
 
         IEvent.TierConfig[] memory tiers = new IEvent.TierConfig[](1);
-        tiers[0] = IEvent.TierConfig({
-            tierId: 1,
-            tierName: "Standard",
-            price: 0.5 ether,
-            maxSupply: 100
-        });
+        tiers[0] = IEvent.TierConfig({tierId: 1, tierName: "Standard", price: 0.5 ether, maxSupply: 100});
 
         address[] memory gatekeepers = new address[](0);
 
@@ -286,12 +260,8 @@ contract IntegrationTest is Test, IERC1155Receiver {
         address event1 = factory.createEvent(config1, tiers, gatekeepers);
 
         // Create second event
-        IEvent.EventConfig memory config2 = IEvent.EventConfig({
-            name: "Event 2",
-            symbol: "E2",
-            baseURI: "https://api.event2.com/",
-            royaltyBps: 1000
-        });
+        IEvent.EventConfig memory config2 =
+            IEvent.EventConfig({name: "Event 2", symbol: "E2", baseURI: "https://api.event2.com/", royaltyBps: 1000});
 
         vm.prank(organizer);
         address event2 = factory.createEvent(config2, tiers, gatekeepers);
@@ -325,12 +295,8 @@ contract IntegrationTest is Test, IERC1155Receiver {
         });
 
         IEvent.TierConfig[] memory tiers = new IEvent.TierConfig[](1);
-        tiers[0] = IEvent.TierConfig({
-            tierId: VIP_TIER_ID,
-            tierName: "Limited Edition",
-            price: VIP_PRICE,
-            maxSupply: 10
-        });
+        tiers[0] =
+            IEvent.TierConfig({tierId: VIP_TIER_ID, tierName: "Limited Edition", price: VIP_PRICE, maxSupply: 10});
 
         address[] memory gatekeepers = new address[](0);
 
@@ -371,17 +337,10 @@ contract IntegrationTest is Test, IERC1155Receiver {
         uint256 nonce,
         uint256 deadline
     ) internal view returns (bytes32) {
-        bytes32 REDEMPTION_TYPEHASH = keccak256(
-            "RedeemTicket(address ticketHolder,uint256 tierId,uint256 nonce,uint256 deadline)"
-        );
+        bytes32 REDEMPTION_TYPEHASH =
+            keccak256("RedeemTicket(address ticketHolder,uint256 tierId,uint256 nonce,uint256 deadline)");
 
-        bytes32 structHash = keccak256(abi.encode(
-            REDEMPTION_TYPEHASH,
-            ticketHolder,
-            tierId,
-            nonce,
-            deadline
-        ));
+        bytes32 structHash = keccak256(abi.encode(REDEMPTION_TYPEHASH, ticketHolder, tierId, nonce, deadline));
 
         bytes32 domainSeparator = eventContract.DOMAIN_SEPARATOR();
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));

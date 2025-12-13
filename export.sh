@@ -1,5 +1,5 @@
 jq '.abi' ./out/Event.sol/Event.json > './exports/Event.json'
 jq '.abi' ./out/AccessPassNFT.sol/AccessPassNFT.json > './exports/AccessPassNFT.json'
-jq '.abi' ./out/Errors.sol/Errors.json > './exports/Errors.json'
+jq '.abi' ./out/SimplrErrors.sol/SimplrErrors.json > './exports/SimplrErrorsErrors.json'
 jq '.abi' ./out/EventFactory.sol/EventFactory.json > './exports/EventFactory.json'
 jq '.abi' ./out/Marketplace.sol/Marketplace.json > './exports/Marketplace.json'

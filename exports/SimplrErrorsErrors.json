@@ -1,0 +1,127 @@
+[
+  {
+    "type": "error",
+    "name": "AlreadyInitialized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "CannotReduceBelowSupply",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EventContractAlreadySet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ExceedsMaxSupply",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "IncorrectPayment",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientQuantity",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientTickets",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidExpiration",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidSignature",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ListingDoesNotExist",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ListingExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ListingNotActive",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotAuthorizedMinter",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotGatekeeper",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotSeller",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SignatureExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TierAlreadyExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TierDoesNotExist",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TierNotActive",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TransferFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TransferLocked",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ZeroAddress",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ZeroMaxSupply",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ZeroPrice",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ZeroQuantity",
+    "inputs": []
+  }
+]

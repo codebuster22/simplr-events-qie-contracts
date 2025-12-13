@@ -53,18 +53,17 @@ contract EventTest is Test, IERC1155Receiver {
         });
 
         // Setup tier configs
-        tierConfigs.push(IEvent.TierConfig({
-            tierId: VIP_TIER_ID,
-            tierName: "VIP",
-            price: VIP_PRICE,
-            maxSupply: VIP_MAX_SUPPLY
-        }));
-        tierConfigs.push(IEvent.TierConfig({
-            tierId: GA_TIER_ID,
-            tierName: "General Admission",
-            price: GA_PRICE,
-            maxSupply: GA_MAX_SUPPLY
-        }));
+        tierConfigs.push(
+            IEvent.TierConfig({tierId: VIP_TIER_ID, tierName: "VIP", price: VIP_PRICE, maxSupply: VIP_MAX_SUPPLY})
+        );
+        tierConfigs.push(
+            IEvent.TierConfig({
+                tierId: GA_TIER_ID,
+                tierName: "General Admission",
+                price: GA_PRICE,
+                maxSupply: GA_MAX_SUPPLY
+            })
+        );
 
         // Setup initial gatekeepers
         initialGatekeepers.push(gatekeeper1);
@@ -77,11 +76,7 @@ contract EventTest is Test, IERC1155Receiver {
         eventContract = Event(eventAddress);
 
         // Deploy AccessPassNFT
-        accessPass = new AccessPassNFT(
-            "Test Event Access Pass",
-            "TE-AP",
-            "https://api.example.com/"
-        );
+        accessPass = new AccessPassNFT("Test Event Access Pass", "TE-AP", "https://api.example.com/");
 
         // Link AccessPassNFT to Event
         accessPass.setEventContract(address(eventContract));
@@ -92,23 +87,21 @@ contract EventTest is Test, IERC1155Receiver {
 
     // ============ IERC1155Receiver Implementation ============
 
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) external pure override returns (bytes4) {
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
+        external
+        pure
+        override
+        returns (bytes4)
+    {
         return this.onERC1155Received.selector;
     }
 
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) external pure override returns (bytes4) {
+    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
+        external
+        pure
+        override
+        returns (bytes4)
+    {
         return this.onERC1155BatchReceived.selector;
     }
 
@@ -514,28 +507,20 @@ contract EventTest is Test, IERC1155Receiver {
         (address receiver, uint256 royaltyAmount) = eventContract.royaltyInfo(VIP_TIER_ID, salePrice);
 
         assertEq(receiver, admin);
-        assertEq(royaltyAmount, salePrice * 500 / 10000); // 5%
+        assertEq(royaltyAmount, (salePrice * 500) / 10000); // 5%
     }
 
     // ============ Helper Functions ============
 
-    function _getRedeemDigest(
-        address ticketHolder,
-        uint256 tierId,
-        uint256 nonce,
-        uint256 deadline
-    ) internal view returns (bytes32) {
-        bytes32 REDEMPTION_TYPEHASH = keccak256(
-            "RedeemTicket(address ticketHolder,uint256 tierId,uint256 nonce,uint256 deadline)"
-        );
+    function _getRedeemDigest(address ticketHolder, uint256 tierId, uint256 nonce, uint256 deadline)
+        internal
+        view
+        returns (bytes32)
+    {
+        bytes32 REDEMPTION_TYPEHASH =
+            keccak256("RedeemTicket(address ticketHolder,uint256 tierId,uint256 nonce,uint256 deadline)");
 
-        bytes32 structHash = keccak256(abi.encode(
-            REDEMPTION_TYPEHASH,
-            ticketHolder,
-            tierId,
-            nonce,
-            deadline
-        ));
+        bytes32 structHash = keccak256(abi.encode(REDEMPTION_TYPEHASH, ticketHolder, tierId, nonce, deadline));
 
         bytes32 domainSeparator = eventContract.DOMAIN_SEPARATOR();
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));

@@ -1,4 +1,4 @@
-[
+export const EventAbi = [
   {
     "type": "constructor",
     "inputs": [],
@@ -1372,4 +1372,4 @@
     "name": "ZeroQuantity",
     "inputs": []
   }
-]
+] as const;

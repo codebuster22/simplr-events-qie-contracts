@@ -1,4 +1,4 @@
-[
+export const SimplrErrorsErrorsAbi = [
   {
     "type": "error",
     "name": "AlreadyInitialized",
@@ -7,6 +7,11 @@
   {
     "type": "error",
     "name": "CannotReduceBelowSupply",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EventContractAlreadySet",
     "inputs": []
   },
   {
@@ -119,4 +124,4 @@
     "name": "ZeroQuantity",
     "inputs": []
   }
-]
+] as const;

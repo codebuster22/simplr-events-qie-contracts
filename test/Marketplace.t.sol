@@ -52,12 +52,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         });
 
         IEvent.TierConfig[] memory tiers = new IEvent.TierConfig[](1);
-        tiers[0] = IEvent.TierConfig({
-            tierId: TIER_ID,
-            tierName: "VIP",
-            price: TICKET_PRICE,
-            maxSupply: 100
-        });
+        tiers[0] = IEvent.TierConfig({tierId: TIER_ID, tierName: "VIP", price: TICKET_PRICE, maxSupply: 100});
 
         address[] memory gatekeepers = new address[](0);
 
@@ -76,23 +71,21 @@ contract MarketplaceTest is Test, IERC1155Receiver {
 
     // ============ IERC1155Receiver Implementation ============
 
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) external pure override returns (bytes4) {
+    function onERC1155Received(address, address, uint256, uint256, bytes calldata)
+        external
+        pure
+        override
+        returns (bytes4)
+    {
         return this.onERC1155Received.selector;
     }
 
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) external pure override returns (bytes4) {
+    function onERC1155BatchReceived(address, address, uint256[] calldata, uint256[] calldata, bytes calldata)
+        external
+        pure
+        override
+        returns (bytes4)
+    {
         return this.onERC1155BatchReceived.selector;
     }
 
@@ -106,13 +99,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
         uint256 expiration = block.timestamp + 1 days;
 
         vm.prank(seller);
-        uint256 listingId = marketplace.createListing(
-            address(eventContract),
-            TIER_ID,
-            3,
-            LISTING_PRICE,
-            expiration
-        );
+        uint256 listingId = marketplace.createListing(address(eventContract), TIER_ID, 3, LISTING_PRICE, expiration);
 
         IMarketplace.Listing memory listing = marketplace.getListing(listingId);
         assertEq(listing.seller, seller);
@@ -290,7 +277,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
 
         uint256 quantity = 2;
         uint256 totalPrice = LISTING_PRICE * quantity;
-        uint256 royaltyAmount = totalPrice * ROYALTY_BPS / 10000;
+        uint256 royaltyAmount = (totalPrice * ROYALTY_BPS) / 10000;
         uint256 sellerProceeds = totalPrice - royaltyAmount;
 
         uint256 sellerBalanceBefore = seller.balance;
@@ -311,7 +298,7 @@ contract MarketplaceTest is Test, IERC1155Receiver {
 
         uint256 quantity = 2;
         uint256 totalPrice = LISTING_PRICE * quantity;
-        uint256 royaltyAmount = totalPrice * ROYALTY_BPS / 10000;
+        uint256 royaltyAmount = (totalPrice * ROYALTY_BPS) / 10000;
 
         vm.prank(buyer);
         vm.expectEmit(true, true, false, true);

@@ -19,11 +19,7 @@ interface IAccessPassNFT {
     /// @param tokenId The ID of the minted token
     /// @param recipient The address receiving the access pass
     /// @param tierId The tier ID from the original ticket
-    event AccessPassMinted(
-        uint256 indexed tokenId,
-        address indexed recipient,
-        uint256 indexed tierId
-    );
+    event AccessPassMinted(uint256 indexed tokenId, address indexed recipient, uint256 indexed tierId);
 
     // ============ Functions ============
 

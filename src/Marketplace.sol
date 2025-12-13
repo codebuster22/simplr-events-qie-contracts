@@ -45,25 +45,19 @@ contract Marketplace is Ownable, Pausable, ReentrancyGuard, IMarketplace {
 
         listingId = _listings.length;
 
-        _listings.push(Listing({
-            seller: msg.sender,
-            eventContract: eventContract,
-            tokenId: tokenId,
-            quantity: quantity,
-            pricePerUnit: pricePerUnit,
-            expirationTime: expirationTime,
-            active: true
-        }));
-
-        emit ListingCreated(
-            listingId,
-            msg.sender,
-            eventContract,
-            tokenId,
-            quantity,
-            pricePerUnit,
-            expirationTime
+        _listings.push(
+            Listing({
+                seller: msg.sender,
+                eventContract: eventContract,
+                tokenId: tokenId,
+                quantity: quantity,
+                pricePerUnit: pricePerUnit,
+                expirationTime: expirationTime,
+                active: true
+            })
         );
+
+        emit ListingCreated(listingId, msg.sender, eventContract, tokenId, quantity, pricePerUnit, expirationTime);
     }
 
     /// @inheritdoc IMarketplace
@@ -105,10 +99,7 @@ contract Marketplace is Ownable, Pausable, ReentrancyGuard, IMarketplace {
     }
 
     /// @inheritdoc IMarketplace
-    function buyListing(
-        uint256 listingId,
-        uint256 quantity
-    ) external payable whenNotPaused nonReentrant {
+    function buyListing(uint256 listingId, uint256 quantity) external payable whenNotPaused nonReentrant {
         if (listingId >= _listings.length) {
             revert SimplrErrors.ListingDoesNotExist();
         }
@@ -143,20 +134,14 @@ contract Marketplace is Ownable, Pausable, ReentrancyGuard, IMarketplace {
         }
 
         // Get royalty info
-        (address royaltyReceiver, uint256 royaltyAmount) = IERC2981(listing.eventContract)
-            .royaltyInfo(listing.tokenId, totalPrice);
+        (address royaltyReceiver, uint256 royaltyAmount) =
+            IERC2981(listing.eventContract).royaltyInfo(listing.tokenId, totalPrice);
 
         // Calculate seller proceeds
         uint256 sellerProceeds = totalPrice - royaltyAmount;
 
         // Transfer tickets from seller to buyer
-        IERC1155(listing.eventContract).safeTransferFrom(
-            listing.seller,
-            msg.sender,
-            listing.tokenId,
-            quantity,
-            ""
-        );
+        IERC1155(listing.eventContract).safeTransferFrom(listing.seller, msg.sender, listing.tokenId, quantity, "");
 
         // Transfer royalty to receiver
         if (royaltyAmount > 0 && royaltyReceiver != address(0)) {
@@ -172,14 +157,7 @@ contract Marketplace is Ownable, Pausable, ReentrancyGuard, IMarketplace {
             revert SimplrErrors.TransferFailed();
         }
 
-        emit ListingPurchased(
-            listingId,
-            msg.sender,
-            quantity,
-            totalPrice,
-            royaltyAmount,
-            royaltyReceiver
-        );
+        emit ListingPurchased(listingId, msg.sender, quantity, totalPrice, royaltyAmount, royaltyReceiver);
     }
 
     // ============ Admin Functions ============

@@ -38,11 +38,7 @@ contract AccessPassNFT is ERC721, IAccessPassNFT {
     /// @param name_ The name of the NFT collection
     /// @param symbol_ The symbol of the NFT collection
     /// @param baseURI_ The base URI for token metadata
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        string memory baseURI_
-    ) ERC721(name_, symbol_) {
+    constructor(string memory name_, string memory symbol_, string memory baseURI_) ERC721(name_, symbol_) {
         _baseTokenURI = baseURI_;
     }
 
@@ -70,10 +66,7 @@ contract AccessPassNFT is ERC721, IAccessPassNFT {
             tokenId = ++_tokenIdCounter;
         }
 
-        _metadata[tokenId] = PassMetadata({
-            tierId: tierId,
-            mintTimestamp: block.timestamp
-        });
+        _metadata[tokenId] = PassMetadata({tierId: tierId, mintTimestamp: block.timestamp});
 
         _safeMint(to, tokenId);
 
@@ -109,11 +102,7 @@ contract AccessPassNFT is ERC721, IAccessPassNFT {
 
     /// @notice Override to enforce transfer lock
     /// @dev Allows minting (from == 0) and burning (to == 0) but blocks transfers during lock period
-    function _update(
-        address to,
-        uint256 tokenId,
-        address auth
-    ) internal override returns (address) {
+    function _update(address to, uint256 tokenId, address auth) internal override returns (address) {
         address from = _ownerOf(tokenId);
 
         // Allow minting and burning, but block transfers during lock period

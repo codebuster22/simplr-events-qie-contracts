@@ -34,37 +34,19 @@ interface IEvent {
     // ============ Events ============
 
     /// @notice Emitted when a new tier is created
-    event TierCreated(
-        uint256 indexed tierId,
-        string tierName,
-        uint256 price,
-        uint256 maxSupply
-    );
+    event TierCreated(uint256 indexed tierId, string tierName, uint256 price, uint256 maxSupply);
 
     /// @notice Emitted when a tier is updated
-    event TierUpdated(
-        uint256 indexed tierId,
-        uint256 newPrice,
-        uint256 newMaxSupply
-    );
+    event TierUpdated(uint256 indexed tierId, uint256 newPrice, uint256 newMaxSupply);
 
     /// @notice Emitted when a tier's active status is changed
     event TierActiveStatusChanged(uint256 indexed tierId, bool active);
 
     /// @notice Emitted when tickets are purchased
-    event TicketsPurchased(
-        address indexed buyer,
-        uint256 indexed tierId,
-        uint256 quantity,
-        uint256 totalPaid
-    );
+    event TicketsPurchased(address indexed buyer, uint256 indexed tierId, uint256 quantity, uint256 totalPaid);
 
     /// @notice Emitted when a ticket is redeemed for an access pass
-    event TicketRedeemed(
-        address indexed ticketHolder,
-        uint256 indexed tierId,
-        uint256 accessPassId
-    );
+    event TicketRedeemed(address indexed ticketHolder, uint256 indexed tierId, uint256 accessPassId);
 
     /// @notice Emitted when a gatekeeper is added
     event GatekeeperAdded(address indexed gatekeeper);
@@ -98,22 +80,13 @@ interface IEvent {
     /// @param tierName The tier name
     /// @param price The price in wei
     /// @param maxSupply The maximum supply
-    function createTier(
-        uint256 tierId,
-        string calldata tierName,
-        uint256 price,
-        uint256 maxSupply
-    ) external;
+    function createTier(uint256 tierId, string calldata tierName, uint256 price, uint256 maxSupply) external;
 
     /// @notice Updates tier price and max supply
     /// @param tierId The tier ID to update
     /// @param newPrice The new price in wei
     /// @param newMaxSupply The new max supply (cannot be less than current supply)
-    function updateTier(
-        uint256 tierId,
-        uint256 newPrice,
-        uint256 newMaxSupply
-    ) external;
+    function updateTier(uint256 tierId, uint256 newPrice, uint256 newMaxSupply) external;
 
     /// @notice Sets a tier's active status
     /// @param tierId The tier ID
@@ -150,12 +123,7 @@ interface IEvent {
     /// @param tierId The tier ID of the ticket
     /// @param deadline The signature expiration timestamp
     /// @param signature The EIP-712 signature from the ticket holder
-    function redeemTicket(
-        address ticketHolder,
-        uint256 tierId,
-        uint256 deadline,
-        bytes calldata signature
-    ) external;
+    function redeemTicket(address ticketHolder, uint256 tierId, uint256 deadline, bytes calldata signature) external;
 
     // ============ View Functions ============
 

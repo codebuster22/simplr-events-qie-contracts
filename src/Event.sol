@@ -3,7 +3,8 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import {ERC1155SupplyUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
+import {ERC1155SupplyUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/token/ERC1155/extensions/ERC1155SupplyUpgradeable.sol";
 import {ERC2981Upgradeable} from "@openzeppelin/contracts-upgradeable/token/common/ERC2981Upgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {EIP712Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
@@ -33,9 +34,8 @@ contract Event is
     // ============ Constants ============
 
     /// @notice EIP-712 typehash for ticket redemption
-    bytes32 public constant REDEMPTION_TYPEHASH = keccak256(
-        "RedeemTicket(address ticketHolder,uint256 tierId,uint256 nonce,uint256 deadline)"
-    );
+    bytes32 public constant REDEMPTION_TYPEHASH =
+        keccak256("RedeemTicket(address ticketHolder,uint256 tierId,uint256 nonce,uint256 deadline)");
 
     // ============ State Variables ============
 
@@ -104,21 +104,15 @@ contract Event is
     // ============ Admin Functions - Tier Management ============
 
     /// @inheritdoc IEvent
-    function createTier(
-        uint256 tierId,
-        string calldata tierName,
-        uint256 price,
-        uint256 maxSupply
-    ) external onlyOwner {
+    function createTier(uint256 tierId, string calldata tierName, uint256 price, uint256 maxSupply)
+        external
+        onlyOwner
+    {
         _createTier(tierId, tierName, price, maxSupply);
     }
 
     /// @inheritdoc IEvent
-    function updateTier(
-        uint256 tierId,
-        uint256 newPrice,
-        uint256 newMaxSupply
-    ) external onlyOwner {
+    function updateTier(uint256 tierId, uint256 newPrice, uint256 newMaxSupply) external onlyOwner {
         if (!_tierExists[tierId]) {
             revert SimplrErrors.TierDoesNotExist();
         }
@@ -206,12 +200,10 @@ contract Event is
     // ============ Gatekeeper Functions ============
 
     /// @inheritdoc IEvent
-    function redeemTicket(
-        address ticketHolder,
-        uint256 tierId,
-        uint256 deadline,
-        bytes calldata signature
-    ) external nonReentrant {
+    function redeemTicket(address ticketHolder, uint256 tierId, uint256 deadline, bytes calldata signature)
+        external
+        nonReentrant
+    {
         if (!_gatekeepers[msg.sender]) {
             revert SimplrErrors.NotGatekeeper();
         }
@@ -225,13 +217,8 @@ contract Event is
         }
 
         // Verify signature
-        bytes32 structHash = keccak256(abi.encode(
-            REDEMPTION_TYPEHASH,
-            ticketHolder,
-            tierId,
-            _useNonce(ticketHolder),
-            deadline
-        ));
+        bytes32 structHash =
+            keccak256(abi.encode(REDEMPTION_TYPEHASH, ticketHolder, tierId, _useNonce(ticketHolder), deadline));
 
         bytes32 hash = _hashTypedDataV4(structHash);
         address signer = hash.recover(signature);
@@ -280,12 +267,7 @@ contract Event is
     // ============ Internal Functions ============
 
     /// @notice Creates a new tier
-    function _createTier(
-        uint256 tierId,
-        string memory tierName,
-        uint256 price,
-        uint256 maxSupply
-    ) internal {
+    function _createTier(uint256 tierId, string memory tierName, uint256 price, uint256 maxSupply) internal {
         if (_tierExists[tierId]) {
             revert SimplrErrors.TierAlreadyExists();
         }
@@ -295,12 +277,7 @@ contract Event is
         }
 
         _tierExists[tierId] = true;
-        _tiers[tierId] = Tier({
-            price: price,
-            maxSupply: maxSupply,
-            tierName: tierName,
-            active: true
-        });
+        _tiers[tierId] = Tier({price: price, maxSupply: maxSupply, tierName: tierName, active: true});
 
         emit TierCreated(tierId, tierName, price, maxSupply);
     }
@@ -308,12 +285,10 @@ contract Event is
     // ============ Override Functions ============
 
     /// @notice Required override for ERC1155SupplyUpgradeable
-    function _update(
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory values
-    ) internal override(ERC1155Upgradeable, ERC1155SupplyUpgradeable) {
+    function _update(address from, address to, uint256[] memory ids, uint256[] memory values)
+        internal
+        override(ERC1155Upgradeable, ERC1155SupplyUpgradeable)
+    {
         super._update(from, to, ids, values);
     }
 

@@ -12,6 +12,7 @@ interface IEventFactory {
     /// @notice Emitted when a new event is created
     event EventCreated(
         address indexed eventAddress,
+        address accessPassNFT,
         address indexed creator,
         string name,
         uint256 indexed eventId

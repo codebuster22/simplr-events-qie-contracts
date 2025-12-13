@@ -57,20 +57,11 @@ contract DebugForkTest is Test {
         address deployer = makeAddr("deployer");
         vm.deal(deployer, 10 ether);
 
-        IEvent.EventConfig memory eventConfig = IEvent.EventConfig({
-            name: "Debug Event",
-            symbol: "DBG",
-            baseURI: "https://test.com/",
-            royaltyBps: 500
-        });
+        IEvent.EventConfig memory eventConfig =
+            IEvent.EventConfig({name: "Debug Event", symbol: "DBG", baseURI: "https://test.com/", royaltyBps: 500});
 
         IEvent.TierConfig[] memory tiers = new IEvent.TierConfig[](1);
-        tiers[0] = IEvent.TierConfig({
-            tierId: 1,
-            tierName: "Standard",
-            price: 0.01 ether,
-            maxSupply: 100
-        });
+        tiers[0] = IEvent.TierConfig({tierId: 1, tierName: "Standard", price: 0.01 ether, maxSupply: 100});
 
         address[] memory gatekeepers = new address[](0);
 

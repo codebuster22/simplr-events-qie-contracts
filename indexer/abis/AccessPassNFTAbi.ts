@@ -1,4 +1,4 @@
-[
+export const AccessPassNFTAbi = [
   {
     "type": "constructor",
     "inputs": [
@@ -630,4 +630,4 @@
     "name": "ZeroAddress",
     "inputs": []
   }
-]
+] as const;

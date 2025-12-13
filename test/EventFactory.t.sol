@@ -35,20 +35,11 @@ contract EventFactoryTest is Test {
         factory = new EventFactory(address(eventImplementation));
 
         // Setup event config
-        eventConfig = IEvent.EventConfig({
-            name: "Test Event",
-            symbol: "TE",
-            baseURI: "https://api.example.com/",
-            royaltyBps: 500
-        });
+        eventConfig =
+            IEvent.EventConfig({name: "Test Event", symbol: "TE", baseURI: "https://api.example.com/", royaltyBps: 500});
 
         // Setup tier configs
-        tierConfigs.push(IEvent.TierConfig({
-            tierId: 1,
-            tierName: "VIP",
-            price: 1 ether,
-            maxSupply: 100
-        }));
+        tierConfigs.push(IEvent.TierConfig({tierId: 1, tierName: "VIP", price: 1 ether, maxSupply: 100}));
 
         // Setup initial gatekeepers
         initialGatekeepers.push(gatekeeper1);
@@ -154,12 +145,7 @@ contract EventFactoryTest is Test {
     }
 
     function test_createEvent_withMultipleTiers() public {
-        tierConfigs.push(IEvent.TierConfig({
-            tierId: 2,
-            tierName: "GA",
-            price: 0.1 ether,
-            maxSupply: 1000
-        }));
+        tierConfigs.push(IEvent.TierConfig({tierId: 2, tierName: "GA", price: 0.1 ether, maxSupply: 1000}));
 
         vm.prank(organizer1);
         address eventAddress = factory.createEvent(eventConfig, tierConfigs, initialGatekeepers);

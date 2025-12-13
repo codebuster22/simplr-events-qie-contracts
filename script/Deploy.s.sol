@@ -12,6 +12,25 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 /// @title Deploy
 /// @notice Deployment script for the event ticketing system
 contract Deploy is Script {
+    string name = "Sample Event";
+    string symbol = "SE";
+    string baseURI = "https://api.example.com/metadata/";
+    uint96 royaltyBps = 500; // 5%
+
+    // tier 1: VIP
+    uint256 vipTierId = 1;
+    string vipTierName = "VIP";
+    uint256 vipTierPrice = 0.001 ether;
+    uint256 vipTierMaxSupply = 100;
+
+    // tier 2: GA
+    uint256 gaTierId = 2;
+    string gaTierName = "General Admission";
+    uint256 gaTierPrice = 0.0001 ether;
+    uint256 gaTierMaxSupply = 1000;
+
+    uint256 buyQuantity = 1;
+
     function run() external {
         // Get deployer private key from environment
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -40,26 +59,22 @@ contract Deploy is Script {
 
         // Setup event config
         IEvent.EventConfig memory eventConfig = IEvent.EventConfig({
-            name: "Sample Event",
-            symbol: "SE",
-            baseURI: "https://api.example.com/metadata/",
-            royaltyBps: 500 // 5%
+            name: name,
+            symbol: symbol,
+            baseURI: baseURI,
+            royaltyBps: royaltyBps // 5%
         });
 
         // Setup tier configs
         IEvent.TierConfig[] memory tiers = new IEvent.TierConfig[](2);
         tiers[0] = IEvent.TierConfig({
-            tierId: 1,
-            tierName: "VIP",
-            price: 0.1 ether,
-            maxSupply: 100
+            tierId: vipTierId,
+            tierName: vipTierName,
+            price: vipTierPrice,
+            maxSupply: vipTierMaxSupply
         });
-        tiers[1] = IEvent.TierConfig({
-            tierId: 2,
-            tierName: "General Admission",
-            price: 0.01 ether,
-            maxSupply: 1000
-        });
+        tiers[1] =
+            IEvent.TierConfig({tierId: gaTierId, tierName: gaTierName, price: gaTierPrice, maxSupply: gaTierMaxSupply});
 
         // No initial gatekeepers (deployer is owner and can add later)
         address[] memory gatekeepers = new address[](0);
@@ -72,11 +87,8 @@ contract Deploy is Script {
 
         // ============ 3. Buy a General Admission Ticket ============
 
-        uint256 gaTierId = 2;
-        uint256 gaPrice = 0.01 ether;
-
-        eventContract.buyTickets{value: gaPrice}(gaTierId, 1);
-        console.log("Bought 1 General Admission ticket");
+        eventContract.buyTickets{value: gaTierPrice}(gaTierId, buyQuantity);
+        console.log("Bought %d General Admission ticket", buyQuantity);
 
         // ============ 4. List Ticket on Marketplace ============
 
@@ -85,16 +97,11 @@ contract Deploy is Script {
         console.log("Approved marketplace for ticket transfers");
 
         // Create listing: 1 GA ticket for 0.02 ETH, expires in 30 days
-        uint256 listingPrice = 0.02 ether;
+        uint256 listingPrice = gaTierPrice * 2;
         uint256 listingExpiration = block.timestamp + 30 days;
 
-        uint256 listingId = marketplace.createListing(
-            eventAddress,
-            gaTierId,
-            1, // quantity
-            listingPrice,
-            listingExpiration
-        );
+        uint256 listingId =
+            marketplace.createListing(eventAddress, gaTierId, buyQuantity, listingPrice, listingExpiration);
         console.log("Created listing ID:", listingId);
 
         vm.stopBroadcast();
@@ -147,18 +154,8 @@ contract DeployLocal is Script {
         });
 
         IEvent.TierConfig[] memory tiers = new IEvent.TierConfig[](2);
-        tiers[0] = IEvent.TierConfig({
-            tierId: 1,
-            tierName: "VIP",
-            price: 0.1 ether,
-            maxSupply: 100
-        });
-        tiers[1] = IEvent.TierConfig({
-            tierId: 2,
-            tierName: "General Admission",
-            price: 0.01 ether,
-            maxSupply: 1000
-        });
+        tiers[0] = IEvent.TierConfig({tierId: 1, tierName: "VIP", price: 0.1 ether, maxSupply: 100});
+        tiers[1] = IEvent.TierConfig({tierId: 2, tierName: "General Admission", price: 0.01 ether, maxSupply: 1000});
 
         address[] memory gatekeepers = new address[](1);
         gatekeepers[0] = deployer;
@@ -178,13 +175,7 @@ contract DeployLocal is Script {
 
         IERC1155(eventAddress).setApprovalForAll(address(marketplace), true);
 
-        uint256 listingId = marketplace.createListing(
-            eventAddress,
-            gaTierId,
-            1,
-            0.02 ether,
-            block.timestamp + 30 days
-        );
+        uint256 listingId = marketplace.createListing(eventAddress, gaTierId, 1, 0.02 ether, block.timestamp + 30 days);
         console.log("Listed ticket, ID:", listingId);
 
         vm.stopBroadcast();
