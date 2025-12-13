@@ -66,7 +66,7 @@ export const accessPass = onchainTable("access_pass", (t) => ({
   accessPassNFT: t.hex().notNull(),
   eventId: t.text().notNull(), // FK to event
   tokenId: t.bigint().notNull(),
-  tierId: t.bigint().notNull(),
+  tierId: t.text().notNull(), // FK to tier (composite key: eventAddress-tierId)
   ownerId: t.hex().notNull(), // FK to user
   mintTimestamp: t.bigint().notNull(),
 }));
@@ -155,6 +155,7 @@ export const ticketRedemptionRelations = relations(ticketRedemption, ({ one }) =
 // AccessPass relations
 export const accessPassRelations = relations(accessPass, ({ one }) => ({
   event: one(event, { fields: [accessPass.eventId], references: [event.id] }),
+  tier: one(tier, { fields: [accessPass.tierId], references: [tier.id] }),
   owner: one(user, { fields: [accessPass.ownerId], references: [user.id] }),
 }));
 

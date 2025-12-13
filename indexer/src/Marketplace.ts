@@ -64,10 +64,15 @@ ponder.on("Marketplace:ListingPurchased", async ({ event: ev, context }) => {
   const existingListing = await context.db.find(listing, { id: listingIdStr });
   if (existingListing) {
     const newQuantityRemaining = existingListing.quantityRemaining - quantity;
+    if (newQuantityRemaining < 0n) {
+      console.warn(`[ListingPurchased] Quantity underflow detected for listing ${listingIdStr}: ${existingListing.quantityRemaining} - ${quantity}`);
+    }
     await context.db.update(listing, { id: listingIdStr }).set({
-      quantityRemaining: newQuantityRemaining,
+      quantityRemaining: newQuantityRemaining > 0n ? newQuantityRemaining : 0n,
       active: newQuantityRemaining > 0n,
     });
+  } else {
+    console.warn(`[ListingPurchased] Listing not found: ${listingIdStr}`);
   }
 });
 

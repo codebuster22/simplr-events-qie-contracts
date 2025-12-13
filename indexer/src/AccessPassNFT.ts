@@ -18,13 +18,14 @@ ponder.on("AccessPassNFT:AccessPassMinted", async ({ event: ev, context }) => {
   // Ensure user exists
   await context.db.insert(user).values({ id: recipient }).onConflictDoNothing();
 
-  // Create AccessPass
+  // Create AccessPass with composite tierId for proper relation to tier table
+  const tierIdStr = `${eventContract}-${tierId}`;
   await context.db.insert(accessPass).values({
     id: `${accessPassAddress}-${tokenId}`,
     accessPassNFT: accessPassAddress,
     eventId: eventContract,
     tokenId,
-    tierId,
+    tierId: tierIdStr,
     ownerId: recipient,
     mintTimestamp: ev.block.timestamp,
   });

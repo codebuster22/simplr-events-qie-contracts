@@ -126,6 +126,8 @@ ponder.on("Event:TicketsPurchased", async ({ event: ev, context }) => {
     await context.db.update(tier, { id: tierId }).set({
       ticketsSold: existingTier.ticketsSold + quantity,
     });
+  } else {
+    console.warn(`[TicketsPurchased] Tier not found: ${tierId}`);
   }
 
   // Increment event totalTicketsSold
@@ -134,6 +136,8 @@ ponder.on("Event:TicketsPurchased", async ({ event: ev, context }) => {
     await context.db.update(event, { id: eventAddress }).set({
       totalTicketsSold: existingEvent.totalTicketsSold + quantity,
     });
+  } else {
+    console.warn(`[TicketsPurchased] Event not found: ${eventAddress}`);
   }
 });
 
@@ -167,6 +171,8 @@ ponder.on("Event:TicketRedeemed", async ({ event: ev, context }) => {
     await context.db.update(tier, { id: tierId }).set({
       ticketsRedeemed: existingTier.ticketsRedeemed + 1n,
     });
+  } else {
+    console.warn(`[TicketRedeemed] Tier not found: ${tierId}`);
   }
 
   // Increment event totalTicketsRedeemed
@@ -175,6 +181,8 @@ ponder.on("Event:TicketRedeemed", async ({ event: ev, context }) => {
     await context.db.update(event, { id: eventAddress }).set({
       totalTicketsRedeemed: existingEvent.totalTicketsRedeemed + 1n,
     });
+  } else {
+    console.warn(`[TicketRedeemed] Event not found: ${eventAddress}`);
   }
 });
 
@@ -198,14 +206,19 @@ ponder.on("Event:TransferSingle", async ({ event: ev, context }) => {
     const existing = await context.db.find(ticketBalance, { id: fromBalanceId });
     if (existing) {
       const newBalance = existing.balance - value;
+      if (newBalance < 0n) {
+        console.warn(`[TransferSingle] Balance underflow detected for ${fromBalanceId}: ${existing.balance} - ${value}`);
+      }
       if (newBalance > 0n) {
         await context.db.update(ticketBalance, { id: fromBalanceId }).set({
           balance: newBalance,
         });
       } else {
-        // Remove balance record if zero
+        // Remove balance record if zero or negative
         await context.db.delete(ticketBalance, { id: fromBalanceId });
       }
+    } else {
+      console.warn(`[TransferSingle] Balance record not found for sender: ${fromBalanceId}`);
     }
   }
 
@@ -254,13 +267,19 @@ ponder.on("Event:TransferBatch", async ({ event: ev, context }) => {
       });
       if (existing) {
         const newBalance = existing.balance - value;
+        if (newBalance < 0n) {
+          console.warn(`[TransferBatch] Balance underflow detected for ${fromBalanceId}: ${existing.balance} - ${value}`);
+        }
         if (newBalance > 0n) {
           await context.db.update(ticketBalance, { id: fromBalanceId }).set({
             balance: newBalance,
           });
         } else {
+          // Remove balance record if zero or negative
           await context.db.delete(ticketBalance, { id: fromBalanceId });
         }
+      } else {
+        console.warn(`[TransferBatch] Balance record not found for sender: ${fromBalanceId}`);
       }
     }
 
