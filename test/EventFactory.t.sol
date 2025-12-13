@@ -99,8 +99,8 @@ contract EventFactoryTest is Test {
 
     function test_createEvent_emitsEventCreatedEvent() public {
         vm.prank(organizer1);
-        vm.expectEmit(false, true, true, true);
-        emit IEventFactory.EventCreated(address(0), organizer1, eventConfig.name, 0);
+        vm.expectEmit(false, false, true, false);
+        emit IEventFactory.EventCreated(address(0), organizer1, eventConfig.name, 0, address(0));
         factory.createEvent(eventConfig, tierConfigs, initialGatekeepers);
     }
 

@@ -64,7 +64,7 @@ contract EventFactory is Ownable, IEventFactory {
         _isEvent[eventAddress] = true;
         _eventsByCreator[msg.sender].push(eventAddress);
 
-        emit EventCreated(eventAddress, address(accessPass), msg.sender, eventConfig.name, eventId);
+        emit EventCreated(eventAddress, msg.sender, eventConfig.name, eventId, address(accessPass));
     }
 
     // ============ View Functions ============
