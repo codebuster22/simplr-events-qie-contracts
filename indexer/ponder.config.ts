@@ -2,14 +2,12 @@ import { parseAbiItem } from "abitype";
 import { createConfig, factory } from "ponder";
 
 import { AccessPassNFTAbi } from "./abis/AccessPassNFTAbi";
-import { SimplrErrorsErrorsAbi } from "./abis/SimplrErrorsErrorsAbi";
 import { EventAbi } from "./abis/EventAbi";
 import { MarketplaceAbi } from "./abis/MarketplaceAbi";
 import { EventFactoryAbi } from "./abis/EventFactoryAbi";
 
-
-const llamaFactoryEvent = parseAbiItem(
-  "event LlamaInstanceCreated(address indexed deployer, string indexed name, address llamaCore, address llamaExecutor, address llamaPolicy, uint256 chainId)",
+const FactoryEventAbi = parseAbiItem(
+  "event EventCreated(address indexed eventAddress,address indexed creator,string name,uint256 indexed eventId,address accessPassNFT)",
 );
 
 type SupportedChains = "qieMainnet" | "qieTestnet";
@@ -30,9 +28,19 @@ export default createConfig({
       chain: process.env.PONDER_NETWORK as SupportedChains,
       abi: EventAbi,
       address: factory({
-        address: "0xFf5d4E226D9A3496EECE31083a8F493edd79AbEB",
-        event: llamaFactoryEvent,
-        parameter: "llamaCore",
+        address: process.env.EVENT_FACTORY_ADDRESS as `0x${string}`,
+        event: FactoryEventAbi,
+        parameter: "eventAddress",
+      }),
+      startBlock: parseInt(process.env.FACTORY_START_BLOCK || "0"),
+    },
+    AccessPassNFT: {
+      chain: process.env.PONDER_NETWORK as SupportedChains,
+      abi: AccessPassNFTAbi,
+      address: factory({
+        address: process.env.EVENT_FACTORY_ADDRESS as `0x${string}`,
+        event: FactoryEventAbi,
+        parameter: "accessPassNFT",
       }),
       startBlock: parseInt(process.env.FACTORY_START_BLOCK || "0"),
     },
@@ -40,13 +48,7 @@ export default createConfig({
       chain: process.env.PONDER_NETWORK as SupportedChains,
       abi: EventFactoryAbi,
       address: process.env.EVENT_FACTORY_ADDRESS as `0x${string}`,
-      startBlock: parseInt(process.env.EVENT_FACTORY_START_BLOCK || "0"),
-    },
-    AccessPassNFT: {
-      chain: process.env.PONDER_NETWORK as SupportedChains,
-      abi: AccessPassNFTAbi,
-      address: process.env.ACCESS_PASS_NFT_ADDRESS as `0x${string}`,
-      startBlock: parseInt(process.env.ACCESS_PASS_NFT_START_BLOCK || "0"),
+      startBlock: parseInt(process.env.FACTORY_START_BLOCK || "0"),
     },
     Marketplace: {
       chain: process.env.PONDER_NETWORK as SupportedChains,
